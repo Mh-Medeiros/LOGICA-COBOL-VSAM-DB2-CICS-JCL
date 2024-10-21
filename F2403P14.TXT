@@ -1,0 +1,413 @@
+       IDENTIFICATION                          DIVISION.
+      *================================================================**
+       PROGRAM-ID.                             F2403P14.
+      *================================================================*
+      * PROGRAMA..... : F2403P14
+      * PROGRAMADOR.. : MATHEUS MEDEIROS
+      * ANALISTA..... : IVAN SANCHES
+      * CONSULTORIA.. : FOURSYS
+      * DATA......... : 03/ 09 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO. : REALIAZAR  OPERACOES DE: (L)EITURA , (G)RAVACAO ,
+      *            (E)XCLUSAO E (R)EGRAVACAO DE 1 REGISTRO DO ARQUIVO
+      *             ATRAVEZ DE UM MENU.
+      *----------------------------------------------------------------*
+      * ARQUIVOS... :
+      * DDNAME..... :              TIPO...:                     BOOK..:
+      * ARQVSAM                    I-O
+      *
+      *================================================================*
+      *  INC........ :
+      *  BOOKERRO - MENSAGENS DE ERRO
+      *
+      *  BOOKLOG - AREA DE FORMATACAO DE ERROS -> GRAVALOG
+      *
+      *----------------------------------------------------------------*
+      *  MODULOS...... :                                        BOOK
+      *  GRAVALOG                                              BOOKLOG
+      *================================================================**
+       ENVIRONMENT                               DIVISION.
+      *================================================================**
+
+
+      *----------------------------------------------------------------**
+       CONFIGURATION                             SECTION.
+      *----------------------------------------------------------------**
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------**
+       INPUT-OUTPUT                              SECTION.
+      *----------------------------------------------------------------**
+       FILE-CONTROL.
+           SELECT ARQVSAM  ASSIGN TO ARQVSAM
+              ORGANIZATION IS INDEXED
+              ACCESS MODE  IS DYNAMIC
+              RECORD KEY   IS REG-ARQVSAM-CHAVE
+              FILE STATUS  IS FS-ARQVSAM.
+
+      *================================================================*
+      *                                                                *
+      * ARQVSAM - CHAVE - CODIGO DO CLIENTE (03 PRIMEIRAS POSICOES)    *
+      *                                                                *
+      *================================================================*
+      *================================================================**
+       DATA                                      DIVISION.
+      *================================================================**
+      *----------------------------------------------------------------**
+       FILE                                      SECTION.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE SAIDA(ARQVSAM)
+      *                               LRECL = 58
+      *----------------------------------------------------------------**
+       FD  ARQVSAM.
+
+       01 REG-ARQVSAM.
+          05 REG-ARQVSAM-CHAVE         PIC X(003).
+          05 REG-ARQVSAM-NOME          PIC X(020).
+          05 REG-ARQVSAM-EMAIL         PIC X(020).
+          05 REG-ARQVSAM-STREAMING     PIC X(010).
+          05 REG-ARQVSAM-VALASS        PIC 9(005).
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                           SECTION.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== INICIO DA WORKING ====='.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE STATUS *****'.
+      *----------------------------------------------------------------*
+       01 FS-ARQVSAM                   PIC 9(002)          VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE APOIO *****'.
+
+
+       01 WRK-CONTADOR                 PIC 9(003) COMP-3   VALUE ZEROS.
+
+       01 WRK-STATUS-ERRO              PIC X(001)          VALUE SPACES.
+
+       01 WRK-ACAO                     PIC X(001)          VALUE SPACES.
+      *----------------------------------------------------------------*
+       01 WRK-REG-LAYOUT.
+          05 WRK-REG-LAYOUT-CHAVE      PIC X(003)          VALUE SPACES.
+          05 WRK-REG-LAYOUT-NOME       PIC X(020)          VALUE SPACES.
+          05 WRK-REG-LAYOUT-EMAIL      PIC X(020)          VALUE SPACES.
+          05 WRK-REG-LAYOUT-STREAMING  PIC X(010)          VALUE SPACES.
+          05 WRK-REG-LAYOUT-VALASS     PIC 9(005)          VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEIS DE ERRO *****'.
+
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403P14'.
+       01 WRK-ARQ-ON                   PIC X(008)          VALUE
+           'ARQVSAM'.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** BOOKS *****'.
+      *------------------- BOOK DE MENSAGEM DE ERRO -------------------*
+       COPY BOOKERRO.
+      *--------------------BOOK DE GRAVACAO DE ERRO -------------------*
+       COPY BOOKLOG.
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== FIM DA WORKING ====='.
+      *================================================================
+       PROCEDURE                                 DIVISION.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIAR.
+           PERFORM 0200-PROCESSAR.
+           PERFORM 0300-FINALIZAR.
+
+      *----------------------------------------------------------------*
+       0000-PRINCIPAL-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIAR                    SECTION.
+      *----------------------------------------------------------------*
+
+           OPEN I-O ARQVSAM.
+
+           PERFORM 0110-TESTAR-STATUS.
+
+           ACCEPT WRK-ACAO.
+           ACCEPT WRK-REG-LAYOUT.
+
+           IF WRK-ACAO EQUAL SPACES OR WRK-REG-LAYOUT EQUAL SPACES
+               DISPLAY 'DADOS INCORRETOS REINSIRA OS DADOS'
+               PERFORM 0300-FINALIZAR
+           END-IF.
+
+
+           MOVE WRK-REG-LAYOUT-CHAVE  TO REG-ARQVSAM-CHAVE.
+
+
+
+
+       0100-INICIAR-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0110-TESTAR-STATUS              SECTION.
+
+           IF FS-ARQVSAM               NOT EQUAL 00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0110'             TO WRK-SECAO
+               MOVE WRK-ERRO-ABERTURA  TO WRK-MENSAGEM
+               DISPLAY ' ERRO NA ABERTURA ' WRK-ARQ-ON
+               MOVE FS-ARQVSAM         TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+
+           PERFORM 0130-LER-DADOS.
+
+       0110-TESTAR-STATUS-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0130-LER-DADOS                  SECTION.
+
+           READ ARQVSAM.
+
+           IF FS-ARQVSAM               NOT EQUAL 00 AND NOT EQUAL 23
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0130'              TO WRK-SECAO
+              MOVE WRK-ERRO-LEITURA    TO WRK-MENSAGEM
+              MOVE FS-ARQVSAM          TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0130-LER-DADOS-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+
+           EVALUATE WRK-ACAO
+
+           WHEN 'L'
+
+                PERFORM 0220-LEITURA
+
+           WHEN 'G'
+
+                PERFORM 0390-CONSISTENCIA
+
+                IF WRK-STATUS-ERRO EQUAL 0
+                   PERFORM 0230-GRAVACAO
+                ELSE
+                   DISPLAY 'ERRO (ACAO OU CODIGO EM BRANCO)'
+                END-IF
+
+           WHEN 'E'
+
+                PERFORM 0240-EXCLUSAO
+
+           WHEN 'R'
+
+                PERFORM 0390-CONSISTENCIA
+
+                IF WRK-STATUS-ERRO EQUAL 0
+                   PERFORM 0250-REGRAVACAO
+                ELSE
+                   DISPLAY 'ERRO AO REGRAVAR'
+                   DISPLAY 'ACAO OU CODIGO EM BRANCO'
+                END-IF
+
+           WHEN OTHER
+
+                DISPLAY 'OPCAO INVALIDA'
+
+           END-EVALUATE.
+       0200-PROCESSAR-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0220-LEITURA                    SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0130-LER-DADOS.
+
+           EVALUATE FS-ARQVSAM
+              WHEN 00
+                   DISPLAY 'REGISTRO ENCONTRADO : ' REG-ARQVSAM
+
+              WHEN 23
+                   DISPLAY 'REGISTRO NAO ENCONTRADO'
+
+              WHEN OTHER
+                   DISPLAY 'ERRO DE LEITURA' FS-ARQVSAM
+
+           END-EVALUATE.
+
+       0220-LEITURA-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0230-GRAVACAO                   SECTION.
+
+           MOVE WRK-REG-LAYOUT         TO REG-ARQVSAM.
+
+           EVALUATE FS-ARQVSAM
+
+           WHEN NOT 00
+               WRITE REG-ARQVSAM
+               DISPLAY 'REGISTRO GRAVADO:  ' REG-ARQVSAM
+
+           WHEN 00
+               DISPLAY 'REGISTRO JA EXISTE ' REG-ARQVSAM
+
+
+           WHEN OTHER
+               DISPLAY 'ERRO DE GRAVACAO : ' FS-ARQVSAM
+
+           END-EVALUATE.
+
+
+       0230-GRAVACAO-FIM.              EXIT.
+      *----------------------------------------------------------------**
+       0240-EXCLUSAO                   SECTION.
+
+           PERFORM 0130-LER-DADOS.
+
+           EVALUATE FS-ARQVSAM
+
+              WHEN 00
+                  DELETE ARQVSAM
+                  DISPLAY 'REGISTRO EXCLUIDO : ' REG-ARQVSAM
+
+              WHEN 23
+                  DISPLAY 'REGISTRO NAO ENCONTRADO :' REG-ARQVSAM
+
+              WHEN OTHER
+                  DISPLAY 'ERRO AO EXCLUIR REGISTRO'
+
+           END-EVALUATE.
+
+       0240-EXCLUSAO-FIM.              EXIT.
+      *----------------------------------------------------------------*
+       0250-REGRAVACAO                 SECTION.
+
+           MOVE WRK-REG-LAYOUT-CHAVE   TO REG-ARQVSAM-CHAVE
+
+           PERFORM 0130-LER-DADOS
+
+           EVALUATE FS-ARQVSAM
+               WHEN 00
+                   REWRITE REG-ARQVSAM FROM WRK-REG-LAYOUT
+                   DISPLAY 'REGISTRO ALTERADO ' REG-ARQVSAM
+
+               WHEN 23
+                   DISPLAY 'REGISTRO NAO ENCONTRADO '  REG-ARQVSAM
+                   DISPLAY FS-ARQVSAM
+               WHEN OTHER
+                   DISPLAY 'ERRO NA ALTERACAO '
+
+               END-EVALUATE.
+
+       0250-REGRAVACAO-FIM.            EXIT.
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------**
+
+           CLOSE ARQVSAM.
+
+           IF FS-ARQVSAM               NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0300'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE FS-ARQVSAM          TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+           GOBACK.
+
+
+       0300-FINALIZAR-FIM.             EXIT.
+      *----------------------------------------------------------------**
+       0390-CONSISTENCIA               SECTION.
+      *---------------------------------------------------------------*
+
+           MOVE 0                      TO WRK-STATUS-ERRO.
+
+           IF WRK-REG-LAYOUT-CHAVE     EQUAL SPACES
+               MOVE 1                  TO WRK-STATUS-ERRO
+           END-IF.
+
+           IF WRK-REG-LAYOUT-NOME      EQUAL SPACES
+               MOVE 1                  TO WRK-STATUS-ERRO
+           END-IF.
+
+
+           IF WRK-REG-LAYOUT-EMAIL     EQUAL SPACES
+               MOVE 1                  TO WRK-STATUS-ERRO
+           END-IF.
+
+           IF WRK-REG-LAYOUT-STREAMING EQUAL SPACES
+               MOVE 1                  TO WRK-STATUS-ERRO
+           END-IF.
+
+           IF WRK-REG-LAYOUT-VALASS    NOT NUMERIC
+               MOVE 1                  TO WRK-STATUS-ERRO
+               DISPLAY 'VALOR INSERIDO INVALIDO'
+           END-IF.
+
+           IF WRK-STATUS-ERRO          EQUAL 0
+              PERFORM 0400-CONSISTENCIA2
+           END-IF.
+
+       0390-CONSISTENCIA-FIM.          EXIT.
+      *----------------------------------------------------------------*
+       0400-CONSISTENCIA2              SECTION.
+
+           PERFORM VARYING WRK-CONTADOR FROM 1 BY 1
+              UNTIL WRK-CONTADOR GREATER 20
+
+              IF WRK-REG-LAYOUT-NOME(WRK-CONTADOR:1) EQUAL '%'
+                                                  OR EQUAL '#'
+                                                  OR EQUAL '$'
+               MOVE ' ' TO WRK-REG-LAYOUT-NOME(WRK-CONTADOR:1)
+           END-IF
+           END-PERFORM.
+
+           PERFORM VARYING WRK-CONTADOR FROM 1 BY 1
+           UNTIL WRK-CONTADOR GREATER 20
+
+           IF WRK-REG-LAYOUT-EMAIL(WRK-CONTADOR:1) EQUAL '%'
+                                                OR EQUAL '#'
+                                                OR EQUAL '$'
+              MOVE ' ' TO WRK-REG-LAYOUT-EMAIL(WRK-CONTADOR:1)
+           END-IF
+           END-PERFORM.
+
+           PERFORM VARYING WRK-CONTADOR FROM 1 BY 1
+           UNTIL WRK-CONTADOR GREATER 10
+
+           IF WRK-REG-LAYOUT-STREAMING(WRK-CONTADOR:1) EQUAL '%'
+                                                   OR  EQUAL '#'
+                                                   OR  EQUAL '$'
+               MOVE ' ' TO WRK-REG-LAYOUT-STREAMING(WRK-CONTADOR:1)
+           END-IF
+           END-PERFORM.
+
+
+
+           PERFORM VARYING WRK-CONTADOR FROM 1 BY 1
+           UNTIL WRK-CONTADOR GREATER 05
+
+           IF WRK-REG-LAYOUT-VALASS(WRK-CONTADOR:1) EQUAL '%'
+                                                 OR EQUAL '#'
+                                                 OR EQUAL '$'
+               MOVE ' ' TO WRK-REG-LAYOUT-VALASS(WRK-CONTADOR:1)
+           END-IF
+           END-PERFORM.
+
+
+       0400-CONSISTENCIA2-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       9999-TRATA-ERRO                 SECTION.
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGERRO    USING WRK-DADOS.
+           GOBACK.
+
+       9999-TRATA-ERRO-FIM.            EXIT.
+      *----------------------------------------------------------------*
