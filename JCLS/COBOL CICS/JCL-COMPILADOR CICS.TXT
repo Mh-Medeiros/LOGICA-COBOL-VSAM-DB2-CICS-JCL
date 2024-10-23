@@ -1,0 +1,10 @@
+//F2403CIC JOB 'COMPCICS',MSGCLASS=X,CLASS=C,NOTIFY=&SYSUID             00010009
+//*=================================================                    00020008
+//* JCL PARA COMPILAR PROGRAMAS CICS                                    00030008
+//*  NAME - NOME DO SEU PROGRAMA                                        00040008
+//*  INSTR - SUA CHAVE                                                  00050008
+//*=================================================                    00060008
+//         JCLLIB ORDER=GR.GERAL.PROCLIB                                00070008
+//*                                                                     00080008
+//COMPPLI  EXEC DFHCICS1,NAME=F2403C0,INSTR='F2403',                    00090020
+//         LIB2='GR.GERAL'                                              00100008

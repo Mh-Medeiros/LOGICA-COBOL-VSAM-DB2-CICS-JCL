@@ -1,0 +1,284 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================**
+       PROGRAM-ID.                     F2403P05.
+      *================================================================*
+      * PROGRAMA..... : F2403P05
+      * PROGRAMADOR.. : MATHEUS MEDEIROS
+      * ANALISTA..... : IVAN SANCHES
+      * CONSULTORIA.. : FOURSYS
+      * DATA......... : 22 / 08 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO......:
+      *
+      *
+      *----------------------------------------------------------------*
+      * ARQUIVOS... :
+      * DDNAME..... :              TIPO...:                     BOOK..:
+      * EVSA2208                   INPUT..:                    O#BV2208
+      * SVSA2208                   OUTPUT                      I#BV2208
+      *================================================================*
+      * INC........ :
+      * BOOKLOG - AREA DE GRAVACAO DE ERROS
+      *
+      *
+      *----------------------------------------------------------------*
+      *  MODULOS...... :                                        BOOK..:
+      *  GRAVALOG                                              BOOKERRO
+      *================================================================**
+       ENVIRONMENT                     DIVISION.
+      *================================================================**
+       CONFIGURATION                   SECTION.
+      *----------------------------------------------------------------**
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------**
+       INPUT-OUTPUT                    SECTION.
+      *----------------------------------------------------------------**
+       FILE-CONTROL.
+           SELECT EVSA2208  ASSIGN TO EVSA2208
+              FILE STATUS IS FS-EVSA2208.
+
+           SELECT SVSA2208  ASSIGN TO SVSA2208
+              FILE STATUS IS FS-SVSA2208.
+
+      *================================================================**
+       DATA                            DIVISION.
+      *================================================================**
+      *----------------------------------------------------------------**
+       FILE                            SECTION.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE SAIDA(EVSA2208)
+      *                               LRECL = 019
+      *----------------------------------------------------------------**
+       FD  EVSA2208
+             RECORDING MODE IS F.
+       COPY 'O#BV2208'.
+      *----------------------------------------------------------------**
+      *        OUTPUT - DADOS DO ARQUIVO DE SAIDA(SVSA2208)
+      *                               LRECL = 027
+      *----------------------------------------------------------------**
+
+       FD  SVSA2208
+             RECORDING MODE IS F.
+       COPY 'I#BV2208'.
+
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                 SECTION.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== INICIO DA WORKING ====='.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE STATUS *****'.
+      *----------------------------------------------------------------*
+       01 FS-EVSA2208                  PIC 9(002)          VALUE ZEROS.
+       01 FS-SVSA2208                  PIC 9(002)          VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE APOIO ***** '.
+      *----------------------------------------------------------------*
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403P05'.
+         01 WRK-ARQ-ON                 PIC X(008)          VALUE
+           'EVSA2208'.
+       01 WRK-DATA-ON                  PIC X(008)          VALUE SPACES.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  VARIAVEL ACUMULADORA ***** '.
+      *----------------------------------------------------------------*
+       01 ACU-LIDOS                    PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-GRAVADOS                 PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-DESPREZ                  PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-TOTAL                    PIC 9(010) COMP-3   VALUE ZEROS.
+      *----------------------------------------------------------------*
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  BOOKS *****'.
+      *-------------------- BOOK DE MENSAGENS DE ERRO -----------------*
+       COPY BOOKERRO.
+      *-------------------- BOOK DE GRAVACAO DE ERROS -----------------*
+       COPY BOOKLOG.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== FIM DA WORKING ====='.
+      *================================================================
+       PROCEDURE                       DIVISION.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIAR.
+           PERFORM 0140-TESTAR-VAZIO.
+           PERFORM 0200-PROCESSAR UNTIL FS-EVSA2208  NOT EQUAL 00.
+           PERFORM 0300-FINALIZAR.
+
+      *----------------------------------------------------------------*
+       0000-PRINCIPAL-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIAR                    SECTION.
+      *----------------------------------------------------------------*
+
+           OPEN INPUT  EVSA2208
+                OUTPUT SVSA2208.
+
+           PERFORM 0110-TESTAR-STATUS.
+
+           ACCEPT WRK-DATA-ON          FROM DATE YYYYMMDD.
+
+
+       0100-INICIAR-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0110-TESTAR-STATUS              SECTION.
+      *----------------------------------------------------------------*
+       0120-TESTAR-EVSA2208.
+      *----------------------------------------------------------------
+
+           IF FS-EVSA2208              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0120'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE FS-EVSA2208         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0130-TESTAR-SVSA2208.
+      *----------------------------------------------------------------*
+
+           IF FS-SVSA2208              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0116'              TO WRK-SECAO
+              MOVE FS-SVSA2208         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0110-TESTAR-STATUS-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0120-RECUPERAR-DATA             SECTION.
+      *----------------------------------------------------------------*
+
+           ACCEPT WRK-DATA             FROM DATE YYYYMMDD.
+
+       0120-RECUPERAR-DATA-FIM.        EXIT.
+      *----------------------------------------------------------------*
+       0140-TESTAR-VAZIO               SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0150-LER-DADOS.
+
+           IF FS-EVSA2208              EQUAL 10
+              DISPLAY WRK-ARQ-VAZIO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0140-TESTAR-VAZIO-FIM.          EXIT.
+      *----------------------------------------------------------------*
+       0150-LER-DADOS                  SECTION.
+      *----------------------------------------------------------------*
+
+           READ EVSA2208.
+
+           IF FS-EVSA2208              NOT EQUAL 10 AND NOT EQUAL 00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0150'             TO WRK-SECAO
+               MOVE WRK-ERRO-LEITURA   TO WRK-MENSAGEM
+               MOVE FS-EVSA2208        TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0150-LER-DADOS-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+
+           ADD 1 TO ACU-LIDOS.
+
+           IF REG-EVSA2208-SALDO       GREATER 0
+              MOVE REG-EVSA2208-AGENCIA
+                                       TO REG-SVSA2208-AGENCIA
+
+
+              MOVE REG-EVSA2208-CONTA  TO REG-SVSA2208-CONTA
+              MOVE REG-EVSA2208-SALDO  TO REG-SVSA2208-SALDO
+              MOVE WRK-DATA            TO REG-SVSA2208-DATA
+
+              WRITE REG-SVSA2208
+              ADD 1                    TO ACU-GRAVADOS
+           ELSE
+
+              DISPLAY REG-EVSA2208
+              ADD 1                    TO  ACU-DESPREZ
+           END-IF.
+
+           COMPUTE ACU-TOTAL = ACU-TOTAL + REG-SVSA2208-SALDO.
+
+           PERFORM 0150-LER-DADOS.
+
+
+      *----------------------------------------------------------------*
+       0200-PROCESSAR-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0210-ESTATISTICA                SECTION.
+      *----------------------------------------------------------------*
+
+           IF ACU-LIDOS                GREATER 0
+              DISPLAY '=========== STATUS ==========='
+              DISPLAY 'TOTAL DE REGISTROS LIDOS       :' ACU-LIDOS
+              DISPLAY 'TOTAL DE REGISTROS GRAVADOS    :' ACU-GRAVADOS
+              DISPLAY 'TOTAL DE REGISTROS DESPREZADOS :' ACU-DESPREZ
+              DISPLAY 'TOTAL DOS SALDOS               :' ACU-TOTAL
+           END-IF.
+
+      *----------------------------------------------------------------**
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------**
+
+           PERFORM 0210-ESTATISTICA.
+
+       0310-FINALIZAR-FS-EVSA2208.
+      *----------------------------------------------------------------*
+           CLOSE EVSA2208
+                 SVSA2208.
+
+           IF FS-EVSA2208              NOT EQUAL  00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0310'             TO WRK-SECAO
+               MOVE WRK-ERRO-FECHAMENTO
+                                       TO WRK-MENSAGEM
+
+               MOVE FS-EVSA2208        TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+           GOBACK.
+      *----------------------------------------------------------------*
+       0320-FINALIZAR-SVSA2208.                                         *
+
+
+           IF FS-SVSA2208              NOT EQUAL  00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0320'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE FS-SVSA2208         TO WRK-STATUS
+
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+           GOBACK.
+
+
+       0300-FINALIZAR-FIM.             EXIT.
+      *----------------------------------------------------------------**
+       9999-TRATA-ERRO                 SECTION.
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGERRO   USING WRK-DADOS.
+           GOBACK.
+
+
+       9999-TRATA-ERRO-FIM.            EXIT.
+      *----------------------------------------------------------------*

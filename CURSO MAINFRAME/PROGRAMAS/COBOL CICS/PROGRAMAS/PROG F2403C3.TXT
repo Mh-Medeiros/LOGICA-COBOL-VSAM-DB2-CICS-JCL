@@ -1,0 +1,251 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================*
+       PROGRAM-ID.                     F2403C3.
+      *================================================================*
+      * PROGRAMA   : F2403C3                                           *
+      * PROGRAMADOR: MATHEUS H MEDEIROS                                *
+      * ANALISTA   : IVAN SANCHES                                      *
+      * CONSULTORIA: FOURSYS                                           *
+      * DATA.......: 07 / 10 / 2024                                    *
+      *----------------------------------------------------------------*
+      * OBJETIVO...: FILTRAR CLIENTES PELO CODIGO                      *
+      *                                                                *
+      *----------------------------------------------------------------*
+      * ARQUIVOS...:                                                   *
+      * DDNAME.....:         TIPO....:                         BOOK'S  *
+      *                                                                *
+      *----------------------------------------------------------------*
+      * IC.........:                                                   *
+      * F2403M3 -> MAPA CICS                                           *
+      *                                                                *
+      *----------------------------------------------------------------*
+      *                                                                *
+      *                      * ALTERACOES *                            *
+      *                                                                *
+      *----------------------------------------------------------------*
+      * PROGRAMA   : F2403C3                                           *
+      * PROGRAMADOR: MATHEUS H MEDEIROS                                *
+      * ANALISTA   : IVAN SANCHES                                      *
+      * CONSULTORIA: FOURSYS                                           *
+      * DATA.......: 08 / 10 / 2024                                    *
+      *----------------------------------------------------------------*
+      * OBJETIVO...: INCLUSAO DA DATA                                  *
+      *                                                                *
+      *================================================================*
+
+       ENVIRONMENT                     DIVISION.
+
+      *================================================================*
+
+       CONFIGURATION                   SECTION.
+
+      *================================================================*
+
+       DATA                            DIVISION.
+
+      *================================================================*
+
+       WORKING-STORAGE                 SECTION.
+
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '=====* INICIO DA WORKING *====='.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '     * VARIAVEIS DE APOIO   * '.
+
+       01 WRK-RET-CICS                 PIC S9(004) COMP    VALUE ZEROS.
+       01 WRK-FASE                     PIC 9(001)          VALUE 1.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '     * VARIAVEIS TEMPORARIAS  * '.
+      *----------------------------------------------------------------*
+
+       01 WRK-DADOS.
+          05 WRK-CODIGO                PIC  X(003)         VALUE SPACES.
+          05 WRK-NOME                  PIC  X(020)         VALUE SPACES.
+          05 WRK-EMAIL                 PIC  X(020)         VALUE SPACES.
+          05 WRK-STREAM                PIC  X(010)         VALUE SPACES.
+          05 WRK-VALOR                 PIC  X(005)         VALUE SPACES.
+      *----------------------------------------------------------------*
+       01 WRK-CHAVE                    PIC  X(006)         VALUE SPACES.
+       01 WRK-RESP                     PIC S9(004) COMP    VALUE ZEROS.
+       01 WS-ABSTIME                   PIC S9(15)  COMP-3  VALUE ZEROS.
+      *------------------ BOOK  ---------------------------------------*
+           COPY F2403M3.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '=====* FIM DA WORKING *====='.
+      *----------------------------------------------------------------*
+
+       PROCEDURE                       DIVISION.
+
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIALIZAR.
+
+           IF WRK-FASE                 EQUAL   2
+              PERFORM 0200-PROCESSAR
+           END-IF.
+
+           PERFORM 0300-FINALIZAR.
+
+           EXEC CICS
+
+              RETURN
+              TRANSID('FMA3')
+
+           END-EXEC.
+
+       0000-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIALIZAR                SECTION.
+      *----------------------------------------------------------------*
+
+           INITIALIZE MAPTESTO.
+
+           EXEC CICS RECEIVE
+
+              MAPSET('F2403M3')
+              MAP('MAPTEST')
+              INTO(MAPTESTI)
+              RESP(WRK-RET-CICS)
+
+           END-EXEC.
+
+           EVALUATE WRK-RET-CICS
+
+              WHEN DFHRESP(NORMAL)
+                  MOVE 2               TO WRK-FASE
+
+              WHEN DFHRESP(MAPFAIL)
+                  MOVE 1               TO WRK-FASE
+
+              WHEN OTHER
+                  EXEC CICS
+
+                     RETURN
+
+                  END-EXEC
+           END-EVALUATE.
+
+
+
+       0100-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0150-DATA                       SECTION.
+      *----------------------------------------------------------------*
+
+
+           EXEC CICS ASKTIME
+
+               ABSTIME(WS-ABSTIME)
+
+           END-EXEC.
+
+           EXEC CICS FORMATTIME
+
+               ABSTIME(WS-ABSTIME)
+               DDMMYYYY(DATAO)
+               DATESEP('/')
+
+           END-EXEC.
+
+
+
+       0150-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+
+           MOVE CODIGOI                TO WRK-CODIGO.
+
+           EXEC CICS READ
+
+               FILE('VSAMARQ')
+               RIDFLD(WRK-CODIGO)
+               INTO(WRK-DADOS)
+               RESP(WRK-RET-CICS)
+
+           END-EXEC.
+
+           IF WRK-RET-CICS             EQUAL 0
+              MOVE WRK-NOME            TO NOMEO
+              MOVE WRK-EMAIL           TO EMAILO
+              MOVE WRK-STREAM          TO STREAMO
+              MOVE WRK-VALOR           TO VALORO
+              MOVE 'CLIENTE ENCONTRADO'
+                                       TO MSGO
+           ELSE
+              MOVE SPACES              TO NOMEO EMAILO STREAMO VALORO
+              MOVE 'CLIENTE NAO ENCONTRADO'
+                                       TO MSGO
+           END-IF.
+
+           EVALUATE EIBAID
+
+              WHEN '3'
+                    MOVE 'OBRIGADO!  VOLTE SEMPRE '
+                                       TO MSGO
+
+                    EXEC CICS SEND TEXT
+
+                        FROM(MSGO)
+                        ERASE
+                        FREEKB
+
+                    END-EXEC
+
+                    EXEC CICS
+
+                        RETURN
+
+                    END-EXEC
+
+           END-EVALUATE.
+
+
+
+       0200-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0150-DATA.
+
+           IF WRK-FASE                 EQUAL 1
+
+              EXEC CICS SEND
+
+                 MAPSET ('F2403M3')
+                 MAP    ('MAPTEST')
+                 MAPONLY
+                 ERASE
+
+              END-EXEC
+
+              EXEC CICS SEND
+
+                 MAPSET ('F2403M3')
+                 MAP    ('MAPTEST')
+                 DATAONLY
+                 FROM(MAPTESTO)
+
+              END-EXEC
+
+           ELSE
+
+              EXEC CICS SEND
+
+                 MAPSET ('F2403M3')
+                 MAP    ('MAPTEST')
+                 DATAONLY
+                 FROM(MAPTESTO)
+
+              END-EXEC
+
+           END-IF.
+
+       0300-99-FIM.                    EXIT.

@@ -1,0 +1,279 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================**
+       PROGRAM-ID.                     F2403P04.
+      *================================================================*
+      * PROGRAMA..... : F2403P04
+      * PROGRAMADOR.. : MATHEUS MEDEIROS
+      * ANALISTA..... : IVAN SANCHES
+      * CONSULTORIA.. : FOURSYS
+      * DATA......... : 20 / 08 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO......:LEITURA E GRAVACAO DOS ASSINANTES COM NETFLIX
+      *
+      *
+      *----------------------------------------------------------------*
+      * ARQUIVOS... :
+      * DDNAME..... :              TIPO...:                     BOOK
+      * ASSINA                     INPUT                      BOOKASSI
+      * RELSTR                     OUTPUT
+      *================================================================*
+      *  INC........ :
+      *  BOOKMSG - VARIAVEIS PARA MENSAGEM DE ERRO.
+      *  BOOKLOG - AREA DE FORMATACAO DE ERROS -> GRAVALOG.
+      *
+      *----------------------------------------------------------------*
+      *  MODULOS...... :                                        BOOK
+      *  GRAVALOG                                             BOOKLOG
+      *================================================================**
+
+       ENVIRONMENT                     DIVISION.
+      *================================================================**
+
+
+      *----------------------------------------------------------------**
+       CONFIGURATION                   SECTION.
+      *----------------------------------------------------------------**
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------**
+       INPUT-OUTPUT                    SECTION.
+      *----------------------------------------------------------------**
+       FILE-CONTROL.
+           SELECT ASSINA  ASSIGN TO ASSINA
+              FILE STATUS IS FS-ASSINA.
+
+           SELECT RELSTR  ASSIGN TO RELSTR
+              FILE STATUS IS FS-RELSTR.
+
+      *================================================================**
+       DATA                            DIVISION.
+      *================================================================**
+      *----------------------------------------------------------------**
+       FILE                            SECTION.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE SAIDA(ASSINA)
+      *                               LRECL = 66
+      *----------------------------------------------------------------**
+       FD  ASSINA
+           RECORDING MODE IS F.
+       COPY BOOKASSI.
+
+      *----------------------------------------------------------------**
+      *        OUTPUT - DADOS DO ARQUIVO DE SAIDA(RELSTR)
+      *                               LRECL = 58
+      *----------------------------------------------------------------**
+
+       FD  RELSTR
+           RECORDING MODE IS F.
+
+       01  WRK-RELSTR                  PIC X(058).
+
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                 SECTION.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** INICIO DA WORKING *****'.
+      *----------------------------------------------------------------*
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE STATUS *****'.
+      *----------------------------------------------------------------*
+
+       01 FS-ASSINA                    PIC 9(002)          VALUE ZEROS.
+       01 FS-RELSTR                    PIC 9(002)          VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE APOIO ***** '.
+      *----------------------------------------------------------------*
+
+       01 WRK-MSG-ERRO                 PIC X(030)          VALUE SPACES.
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403P03'.
+       01 WRK-ARQ-ON                   PIC X(008)          VALUE
+           'ASSINA'.
+       01 WRK-STREAM-ON                PIC X(010)          VALUE 'MAX'.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  VARIAVEL ACUMULADORA ***** '.
+      *----------------------------------------------------------------*
+
+       01 ACU-LIDOS                    PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-ASSINA                   PIC 9(003) COMP-3   VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  BOOKS *****'.
+      *-------------------- BOOK DE MENSAGENS DE ERRO -----------------*
+
+       COPY BOOKERRO.
+
+      *-------------------- BOOK DE GRAVACAO DE ERROS -----------------*
+
+       COPY BOOKLOG.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** FIM DA WORKING *****'.
+      *================================================================
+       PROCEDURE                       DIVISION.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIAR.
+
+           PERFORM 0120-TESTAR-VAZIO.
+
+           PERFORM 0200-PROCESSAR UNTIL FS-ASSINA NOT EQUAL 00.
+
+           PERFORM 0300-FINALIZAR.
+
+      *----------------------------------------------------------------*
+       0000-PRINCIPAL-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIAR                    SECTION.
+      *----------------------------------------------------------------*
+
+           OPEN INPUT  ASSINA
+                OUTPUT RELSTR.
+
+           PERFORM 0110-TESTAR-STATUS.
+
+
+       0100-INICIAR-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0110-TESTAR-STATUS              SECTION.
+      *----------------------------------------------------------------*
+       0115-TESTAR-ASSINA.
+      *----------------------------------------------------------------*
+
+           IF FS-ASSINA                NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0115'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE FS-ASSINA           TO WRK-STATUS
+
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0116-TESTAR-RELSTR.
+      *----------------------------------------------------------------*
+
+           IF FS-RELSTR                NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0116'              TO WRK-SECAO
+              MOVE FS-RELSTR           TO WRK-STATUS
+
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0110-TESTAR-STATUS-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0120-TESTAR-VAZIO               SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0130-LER-DADOS.
+
+           IF FS-ASSINA                EQUAL 10
+              DISPLAY WRK-ARQ-VAZIO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0120-TESTAR-VAZIO-FIM.          EXIT.
+      *----------------------------------------------------------------*
+       0130-LER-DADOS                  SECTION.
+      *----------------------------------------------------------------*
+
+           READ ASSINA.
+
+           IF FS-ASSINA                NOT EQUAL 10 AND NOT EQUAL 00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0130'             TO WRK-SECAO
+               MOVE WRK-ERRO-LEITURA   TO WRK-MENSAGEM
+               MOVE FS-ASSINA          TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0130-LER-DADOS-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+
+           ADD 1                       TO ACU-LIDOS.
+
+           IF WRK-STREAM-ON            EQUAL REG-STREAM
+              MOVE REG-ASSINA          TO WRK-RELSTR
+              WRITE WRK-RELSTR
+              ADD 1                    TO ACU-ASSINA
+           END-IF.
+
+           PERFORM 0130-LER-DADOS.
+
+      *----------------------------------------------------------------*
+       0200-PROCESSAR-FIM.             EXIT.
+      *---------------------------------------------------------------*
+       0210-ESTATISTICA                SECTION.
+      *----------------------------------------------------------------*
+
+           IF ACU-LIDOS                GREATER 0
+               DISPLAY 'TOTAL DE REGISTROS LIDOS    :' ACU-LIDOS
+               DISPLAY 'TOTAL DE REGISTROS GRAVADOS :' ACU-ASSINA
+           END-IF.
+
+      *----------------------------------------------------------------**
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------**
+
+           PERFORM 0210-ESTATISTICA.
+
+       0310-FINALIZAR-ASSINA.
+      *----------------------------------------------------------------*
+           CLOSE ASSINA
+                 RELSTR.
+
+           IF FS-ASSINA                NOT EQUAL  00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0310'             TO WRK-SECAO
+               MOVE WRK-ERRO-FECHAMENTO
+                                       TO WRK-MENSAGEM
+
+               MOVE FS-ASSINA          TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+           GOBACK.
+      *----------------------------------------------------------------*
+       0320-FINALIZAR-RELSTR.                                           *
+      *----------------------------------------------------------------*
+
+           IF FS-RELSTR                NOT EQUAL  00
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
+               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
+               MOVE '0320'             TO WRK-SECAO
+               MOVE WRK-ERRO-FECHAMENTO
+                                       TO WRK-MENSAGEM
+
+               MOVE FS-RELSTR          TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+           GOBACK.
+
+
+       0300-FINALIZAR-FIM.             EXIT.
+      *----------------------------------------------------------------**
+       9999-TRATA-ERRO                 SECTION.
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGERRO   USING WRK-DADOS.
+           GOBACK.
+
+
+       9999-TRATA-ERRO-FIM.            EXIT.
+      *----------------------------------------------------------------*

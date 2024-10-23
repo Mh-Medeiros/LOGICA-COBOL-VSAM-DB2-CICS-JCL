@@ -1,0 +1,186 @@
+       IDENTIFICATION                  DIVISION.                        00010000
+      *================================================================*00011001
+       PROGRAM-ID.                     F2400DB9.                        00020000
+      *================================================================*00030001
+      * PROGRAMA   : F2403DB9                                           00032001
+      * PROGRAMADOR: MATHEUS H MEDEIROS                                 00033001
+      * ANALISTA   : IVAN SANCHES                                       00034001
+      * CONSULTORIA: FOURSYS                                            00035001
+      * DATA.......: 30 / 09 / 2024                                     00036001
+      *----------------------------------------------------------------*00037001
+      * OBJETIVO...: FAZER A ALTERACAO DE UM REGISTROS NA TABELA        00038001
+      *                                                                 00039001
+      *----------------------------------------------------------------*00039101
+      * BASE DE DADOS                                                   00039201
+      * TABELAS.........:                                INCLUDE/BOOK   00039301
+      *  F2403.FUNC                                         BOOKFUNC    00039401
+      *                                                                 00039501
+      *----------------------------------------------------------------*00039601
+      * ARQUIVOS...:                                                    00039701
+      * DDNAME.....:                I/O                  INCLUDE/BOOKS  00039801
+      *                                                                 00039901
+      *----------------------------------------------------------------*00040001
+      * INC'S......:                                                    00040101
+      *                                                                 00040201
+      * BOOKDB2  ->  GRAVADB2                                           00040301
+      * BOOKFUC  ->  LAYOUT DA TABELA                                   00040401
+      * BOOKERRO ->  MENSAGENS DE ERRO                                  00040501
+      *----------------------------------------------------------------*00040601
+      * MODULOS...:                                                     00040701
+      *                                                                 00040801
+      * GRAVADB2 -> FORMATACAO E GRAVACAO DE ERROS - DB2                00040901
+      *                                                                 00041001
+      *================================================================*00041101
+       ENVIRONMENT                     DIVISION.                        00042000
+      *================================================================*00050001
+                                                                        00060000
+      *================================================================*00070001
+       DATA                            DIVISION.                        00080000
+      *================================================================*00090001
+       WORKING-STORAGE                 SECTION.                         00100000
+      *================================================================*00110001
+       01  FILLER                      PIC X(050)          VALUE        00110401
+           '***** INICIO DA WORKING *****'.                             00110501
+      *================================================================*00110601
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  VARIAVEL DE APOIO * ====='.                        00110801
+
+       01 WRK-SQLCODE                  PIC -999            VALUE ZEROS. 00111201
+       01 WRK-NULO                     PIC S9(004) COMP    VALUE ZEROS. 00111301
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  VARIAVEIS TEMPORARIAS * ====='.                    00110801
+                                                                        00110901
+       01 WRK-FUNC.                                                     00111001
+           05 WRK-IDFUNC               PIC 9(009)          VALUE ZEROS.
+           05 WRK-NOMEFUNC             PIC X(030)          VALUE SPACES.
+           05 WRK-DEPTOFUNC            PIC X(003)          VALUE SPACES.00111401
+           05 WRK-SALFUNC              PIC 9(003)V99       VALUE ZEROS.
+           05 WRK-FILHOSFUNC           PIC 9(009)          VALUE ZEROS.
+           05 WRK-ADMISFUNC            PIC X(010)          VALUE SPACES.
+      *----------------------------------------------------------------*00111701
+       01  FILLER                      PIC X(050)          VALUE        00111801
+           '==== * VARIAVEL DE ERRO *===='.                             00111901
+      *----------------------------------------------------------------*00112001
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403DB7'.
+       01 WRK-TABELA-ON                PIC X(020)          VALUE
+           'F2403.FUNC'.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '====  *AREA DOS  BOOKS * ==== '.
+      *---------------------- BOOK DE MENSAGEM DE ERRO ----------------*
+       COPY BOOKERRO.
+
+      *---------------------- BOOK DE GRAVACAO DE ERROS ---------------*
+       COPY BOOKDB2.
+
+      *----------------------------------------------------------------*00111701
+       01  FILLER                      PIC X(050)          VALUE        00111801
+           '==== * AREA DB2 *===='.                                     00111901
+      *----------------------------------------------------------------*00112001
+                                                                        00112101
+           EXEC SQL                                                     00112200
+            INCLUDE  SQLCA                                              00112300
+           END-EXEC.                                                    00112400
+                                                                        00112500
+           EXEC SQL                                                     00112600
+            INCLUDE  BOOKFUNC                                           00112700
+           END-EXEC.                                                    00112800
+                                                                        00112901
+      *----------------------------------------------------------------*00113001
+       01  FILLER                      PIC X(050)          VALUE        00113101
+           '***** FIM DA WORKING *****'.                                00113201
+      *================================================================*00113301
+       PROCEDURE                       DIVISION.                        00113500
+      *================================================================*00113601
+       0000-PRINCIPAL                  SECTION.                         00113700
+                                                                        00113801
+           PERFORM 0100-INICIALIZAR.                                    00113900
+           PERFORM 0200-PROCESSAR.                                      00114000
+           PERFORM 0300-FINALIZAR.                                      00114100
+           GOBACK.                                                      00114200
+                                                                        00114301
+       0000-99-FIM.                    EXIT.                            00114401
+      *----------------------------------------------------------------*00114501
+       0100-INICIALIZAR                SECTION.                         00114700
+      *----------------------------------------------------------------*00114801
+                                                                        00114901
+           ACCEPT WRK-FUNC.                                             00115000
+
+           MOVE WRK-IDFUNC             TO DB2-IDFUNC.                   00115100
+           MOVE WRK-NOMEFUNC           TO DB2-NOMEFUNC.                 00115100
+           MOVE WRK-DEPTOFUNC          TO DB2-DEPTOFUNC.                00115100
+           MOVE WRK-SALFUNC            TO DB2-SALFUNC.                  00115100
+           MOVE WRK-FILHOSFUNC         TO DB2-FILHOSFUNC.               00115100
+           MOVE WRK-ADMISFUNC          TO DB2-ADMISFUNC.                00115100
+
+           DISPLAY WRK-FUNC.
+           DISPLAY REG-FUNC.
+
+
+       0100-99-FIM.                    EXIT.                            00115301
+      *----------------------------------------------------------------*00115401
+       0200-PROCESSAR                  SECTION.                         00115600
+      *----------------------------------------------------------------*00115701
+
+           EXEC SQL                                                     00115801
+              UPDATE F2403.FUNC
+                 SET NOMEFUNC=:DB2-NOMEFUNC,
+                 DEPTOFUNC=:DB2-DEPTOFUNC,
+                   SALFUNC=:DB2-SALFUNC,
+                   FILHOSFUNC=:DB2-FILHOSFUNC INDICATOR:WRK-NULO,
+                   ADMISFUNC=:DB2-ADMISFUNC
+
+                 WHERE IDFUNC =: DB2-IDFUNC
+
+           END-EXEC.                                                    00116100
+                                                                        00116200
+           MOVE SQLCODE                TO WRK-SQLCODE.                  00116300
+           DISPLAY 'STATUS : ' WRK-SQLCODE.                             00116400
+                                                                        00116500
+           IF (SQLCODE NOT EQUAL 0 AND +100 AND -180 AND -803)OR        00116600
+              (SQLWARN0 EQUAL 'W')                                      00116700
+               MOVE SQLCODE            TO WRK-SQLCODE                   00116800
+               MOVE WRK-TABELA-ON      TO WRK-TABELA-DB2                00116900
+               MOVE WRK-PROG-ON        TO WRK-PROGRAMA-DB2              00117000
+               MOVE WRK-SQLCODE        TO WRK-SQLCODE-DB2               00117100
+               PERFORM 9998-TRATA-DB2                                   00117201
+           END-IF.                                                      00117300
+
+           IF WRK-NULO                 EQUAL -1
+              MOVE 0                   TO DB2-FILHOSFUNC
+           END-IF.
+                                                                        00117400
+           IF SQLCODE                  EQUAL 0                          00117500
+              DISPLAY 'REGISTRO ATUALIZADO'                             00117600
+           END-IF.                                                      00117700
+
+           IF SQLCODE                  EQUAL 100
+              DISPLAY 'CODIGO NAO EXISTE'
+           END-IF.
+
+           IF SQLCODE                  EQUAL -180
+              DISPLAY 'DATA INVALIDA '
+           END-IF.
+
+           IF SQLCODE                  EQUAL 803
+              DISPLAY 'ERRO NA CHAVE  '
+           END-IF.
+                                                                        00117800
+       0200-99-FIM.                    EXIT.                            00117901
+      *----------------------------------------------------------------*00118001
+       0300-FINALIZAR                  SECTION.                         00118200
+      *----------------------------------------------------------------*00118301
+                                                                        00118401
+           DISPLAY 'FIM DE PROCESSO'.                                   00119000
+                                                                        00120001
+       0300-99-FIM.                    EXIT.                            00130001
+      *----------------------------------------------------------------*00140001
+       9998-TRATA-DB2                  SECTION.                         00160001
+                                                                        00161001
+           CALL WRK-PROGRAMA-LOGDB2    USING WRK-DADOS-DB2.             00170001
+           GOBACK.                                                      00180001
+                                                                        00181001
+       9998-99-FIM.                    EXIT.                            00190001
+      *----------------------------------------------------------------*00200001

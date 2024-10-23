@@ -1,0 +1,63 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================*
+       PROGRAM-ID.                     F2403P02.
+      *================================================================*
+       ENVIRONMENT                     DIVISION.
+      *================================================================*
+       CONFIGURATION                   SECTION.
+      *----------------------------------------------------------------*
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+      *----------------------------------------------------------------*
+      *================================================================*
+       DATA                            DIVISION.
+      *================================================================*
+       WORKING-STORAGE                 SECTION.
+       01 WRK-N1                       PIC 9(002)V99        VALUE ZEROS.
+       01 WRK-N2                       PIC 9(002)V99        VALUE ZEROS.
+       01 WRK-MEDIA                    PIC 9(002)V99 COMP-3 VALUE ZEROS.
+      *--------------------- VARIAVEL DE EDICAO ---------------------
+       01 WRK-MEDIA-ED                 PIC ZZ9,99           VALUE ZEROS.
+       01 WRK-N1-ED                    PIC ZZ9,99           VALUE ZEROS.
+       01 WRK-N2-ED                    PIC ZZ9,99           VALUE ZEROS.
+      *===============================================================
+       PROCEDURE                       DIVISION.
+      *===============================================================
+
+           ACCEPT WRK-N1.
+           ACCEPT WRK-N2.
+
+      *-------------------- TESTE SE TEM ERRO NOS 2 NUMEROS -----------
+
+           IF WRK-N1 NOT NUMERIC AND WRK-N2 NOT NUMERIC
+              DISPLAY "ERRO OS 2 NUMEROS SAO INVALIDOS"
+              GOBACK
+           END-IF.
+
+      *-------------------- TESTE SE O 1(O) NUMERO E VALIDO -----------
+
+            IF WRK-N1                  NOT NUMERIC
+               DISPLAY "1(O) NUMERO DIGITADO INVALIDO"
+               GOBACK
+            END-IF.
+
+      *---------------------- TESTE SE O 2(O) NUMERO E VALIDO ---------
+
+            IF WRK-N2 NOT NUMERIC
+               DISPLAY "2(O) NUMERO DIGITADO INVALIDO"
+               GOBACK
+            END-IF.
+
+            MOVE WRK-N1                TO WRK-N1-ED.
+            MOVE WRK-N2                TO WRK-N2-ED.
+
+            DISPLAY "1(O) NUMERO DIGITADO:" WRK-N1-ED
+            DISPLAY "2(O) NUMERO DIGITADO:" WRK-N2-ED
+
+            COMPUTE WRK-MEDIA  =  ( WRK-N1 + WRK-N2) / 2.
+
+            MOVE  WRK-MEDIA            TO WRK-MEDIA-ED.
+
+            DISPLAY " MEDIA DOS VALORES " WRK-N1 " E " WRK-N2 " EH "
+              WRK-MEDIA-ED.
+            STOP RUN.

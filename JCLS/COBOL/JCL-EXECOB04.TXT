@@ -1,0 +1,16 @@
+//F2403E04 JOB 'EXECUT',CLASS=C,MSGCLASS=X,NOTIFY=&SYSUID,TIME=(0,02)
+//****************************************************
+//**       APAGA O RELSTR                           *
+//****************************************************
+//STEP001  EXEC PGM=IEFBR14
+//ARQUIVO  DD   DSN=GR.F2403.RELSTR,DISP=(MOD,DELETE,DELETE),
+//         SPACE=(TRK,(1,1),RLSE),UNIT=SYSDA
+//****************************************************
+//STEP002  EXEC PGM=F2403P04
+//STEPLIB  DD DSN=GR.GERAL.LOADLIB,DISP=SHR
+//SYSOUT   DD SYSOUT=*
+//ASSINA   DD DSN=GR.F2403.ASSINA,DISP=SHR
+//LOGERROS DD DSN=GR.F2403.LOGERROS,DISP=SHR
+//RELSTR   DD DSN=GR.F2403.RELSTR,DISP=(NEW,CATLG,DELETE),
+//         SPACE=(TRK,(1,1),RLSE),UNIT=SYSDA,
+//         DCB=(LRECL=58,RECFM=FB,BLKSIZE=0)

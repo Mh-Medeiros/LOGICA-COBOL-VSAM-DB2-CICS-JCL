@@ -1,0 +1,125 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================*
+       PROGRAM-ID.                     F2403C2.
+      *================================================================*
+      * PROGRAMA   : F2403C2
+      * PROGRAMADOR: MATHEUS H MEDEIROS
+      * ANALISTA   : IVAN SANCHES
+      * CONSULTORIA: FOURSYS
+      * DATA.......: 04 / 10 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO...:
+      *
+      *----------------------------------------------------------------*
+      *================================================================*
+       ENVIRONMENT                     DIVISION.
+      *================================================================*
+       CONFIGURATION                   SECTION.
+      *================================================================*
+       DATA                            DIVISION.
+      *================================================================*
+       WORKING-STORAGE                 SECTION.
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '=====* INICIO DA WORKING *====='.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '     * VARIAVEIS DE APOIO   * '.
+
+
+       01 WRK-RESP                     PIC S9(004) COMP    VALUE ZEROS.
+
+       01 WRK-DADOS.
+          05 FILLER                    PIC X(004).
+          05 WRK-CODIGO                PIC X(006).
+          05 WRK-FLAG                  PIC X(001).
+          05 WRK-CONTEUDO              PIC X(073).
+
+       01 WRK-ARQ.
+          05 FILLER                    PIC X(001).
+          05 WRK-ARQ-CODIGO            PIC X(006).
+          05 WRK-ARQ-CONTEUDO          PIC X(073).
+
+      *================================================================*
+       LINKAGE                         SECTION.
+
+       01 DFHCOMMAREA                  PIC X(080).
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '=====* FIM DA WORKING *====='.
+      *----------------------------------------------------------------*
+       PROCEDURE                       DIVISION USING DFHCOMMAREA.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIALIZAR.
+
+
+           PERFORM 0200-PROCESSAR.
+
+
+           PERFORM 0300-FINALIZAR.
+
+
+       0000-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIALIZAR                SECTION.
+      *----------------------------------------------------------------*
+
+           INITIALIZE WRK-DADOS.
+
+           INITIALIZE WRK-ARQ.
+
+
+
+       0100-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+
+           EXEC CICS RECEIVE
+              INTO(WRK-DADOS)
+           END-EXEC.
+
+           EXEC CICS READ
+              FILE ('FILEA')
+              RIDFLD(WRK-CODIGO)
+              INTO(WRK-ARQ)
+              RESP(WRK-RESP)
+           END-EXEC.
+
+           IF WRK-RESP                 EQUAL 0
+              MOVE WRK-ARQ-CONTEUDO    TO WRK-CONTEUDO
+              MOVE '0'                 TO WRK-FLAG
+
+              EXEC CICS SEND TEXT
+                 FROM(WRK-DADOS)
+                 ERASE
+                 FREEKB
+             END-EXEC
+
+           ELSE
+              MOVE '1'                 TO WRK-FLAG
+              EXEC CICS SEND TEXT
+                 FROM(WRK-DADOS)
+                 ERASE
+                 FREEKB
+             END-EXEC
+           END-IF.
+
+
+       0200-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------*
+
+
+           EXEC CICS
+
+              RETURN
+
+           END-EXEC.
+
+
+       0300-99-FIM.                    EXIT.

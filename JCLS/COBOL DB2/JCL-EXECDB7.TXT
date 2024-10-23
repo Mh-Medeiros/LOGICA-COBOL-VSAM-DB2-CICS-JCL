@@ -1,0 +1,22 @@
+//F2403EDB JOB 'COMPDB2',MSGCLASS=X,CLASS=C,NOTIFY=&SYSUID,TIME=(0,01)
+//*-------------------------------------------------------------------*
+//*      JOB DE EXECUCAO   DE PROGRAMA COBOL COM DB2 BATCH            *
+//*-------------------------------------------------------------------*
+//EXECDB   EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD   DSN=DSN810.SDSNLOAD,DISP=SHR
+//         DD   DSN=GR.GERAL.LOADLIB,DISP=SHR
+//DBRMLIB  DD   DSN=DSN810.DBRMLIB.DATA,DISP=SHR
+//SYSTSPRT DD   SYSOUT=*
+//SYSPRINT DD   SYSOUT=*
+//*YSOUT   DD   SYSOUT=*
+//SYSTSIN  DD   *
+  DSN  SYSTEM(DB8G)
+  RUN PROGRAM(F2403DB7) PLAN(F2403DB7) -
+       LIB('GR.GERAL.LOADLIB')
+  END
+//LOGDB2   DD  DSN=GR.F2403.LOGDB2,DISP=SHR
+//*************************************************
+//*  INCLUIR ABAIXO OS DEMAIS ARQUIVOS DO SEU JOB *
+//*************************************************
+//SYSIN  DD  *
+000000010DIEGO HENRIQUE                QA 15550         2021-05-11

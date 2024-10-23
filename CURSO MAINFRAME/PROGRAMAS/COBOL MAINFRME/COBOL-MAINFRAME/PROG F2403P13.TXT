@@ -1,0 +1,190 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================**
+       PROGRAM-ID.                     F2403P13.
+      *================================================================*
+      * PROGRAMA..... : F2403P13
+      * PROGRAMADOR.. : MATHEUS MEDEIROS
+      * ANALISTA..... : IVAN SANCHES
+      * CONSULTORIA.. : FOURSYS
+      * DATA......... : 02/ 09 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO......:VSAM - FAZER A LEITURA DE TODOS OS REGISTROS DO
+      * ARQUIVO COM STRAT NEXT
+      *
+      *----------------------------------------------------------------*
+      * ARQUIVOS... :
+      * DDNAME..... :              TIPO...:                     BOOK
+      * ARQVSAM
+      *
+      *================================================================*
+      *  INC........ :
+      *
+      *
+      *
+      *----------------------------------------------------------------*
+      *  MODULOS...... :                                        BOOK
+      *
+      *----------------------------------------------------------------*
+      *                                                                *
+      *================================================================*
+      *                                                                *
+      *                       * ALTERACOES *                           *
+      *                                                                *
+      *================================================================*
+      *
+ATL1  * PROGRAMADOR. :MATHEUS MEDEIROS
+.     * ANALISTA.... :IVAN SANCHES
+.     * CONSULTORIA. :FOURSYS
+.     * DATA........ :03 / 09 / 2024
+.     *----------------------------------------------------------------*
+.     * OBJETIVO.... :RECEBER DUAS CHAVES E FAZER A LEITURA DOS
+.     * DOS REGISTROS A PARTIR DA 1A CHAVE ATE A 2A E MOSTRAR
+ATL1  * ESTATISTICA DOS LIDOS ENTRE AS CHAVES
+      *----------------------------------------------------------------*
+      *================================================================**
+       ENVIRONMENT                     DIVISION.
+      *================================================================**
+
+
+      *----------------------------------------------------------------**
+       CONFIGURATION                   SECTION.
+      *----------------------------------------------------------------**
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------**
+       INPUT-OUTPUT                    SECTION.
+      *----------------------------------------------------------------**
+       FILE-CONTROL.
+           SELECT ARQVSAM  ASSIGN TO ARQVSAM
+              ORGANIZATION IS INDEXED
+              ACCESS MODE  IS DYNAMIC
+              RECORD KEY   IS REG-ARQVSAM-CHAVE
+              FILE STATUS  IS FS-ARQVSAM.
+
+
+      *================================================================**
+       DATA                            DIVISION.
+      *================================================================**
+      *----------------------------------------------------------------**
+       FILE                            SECTION.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE SAIDA(ARQVSAM)
+      *                               LRECL = 58
+      *----------------------------------------------------------------**
+       FD  ARQVSAM.
+
+       01 REG-ARQVSAM.
+          05 REG-ARQVSAM-CHAVE         PIC X(003).
+          05 REG-ARQVSAM-NOME          PIC X(020).
+          05 REG-ARQVSAM-EMAIL         PIC X(020).
+          05 REG-ARQVSAM-STREAMING     PIC X(010).
+          05 REG-ARQVSAM-VALASS        PIC 9(005).
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                 SECTION.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== INICIO DA WORKING ====='.
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE STATUS *****'.
+
+       01 FS-ARQVSAM                   PIC 9(002)          VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEIS ACUMULADORAS *****'.
+
+       01 ACU-LIDOS                    PIC 9(003) COMP-3   VALUE ZEROS.
+ATL1   01 ACU-VALIDOS                  PIC 9(003) COMP-3   VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== FIM DA WORKING ====='.
+      *================================================================*
+       LINKAGE                         SECTION.
+      *================================================================
+       01 LNK-DATA.
+          05 LNK-DIGITO                PIC X(002).
+          05 LNK-CHAVE                 PIC 9(003).
+ATL1      05 LNK-CHAVE2                PIC 9(003).
+      *================================================================*
+       PROCEDURE                       DIVISION USING LNK-DATA.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIAR.
+
+           PERFORM 0200-PROCESSAR UNTIL FS-ARQVSAM NOT EQUAL 00.
+
+           PERFORM 0300-FINALIZAR.
+
+           GOBACK.
+
+      *----------------------------------------------------------------*
+       0000-PRINCIPAL-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIAR                    SECTION.
+      *----------------------------------------------------------------*
+
+           OPEN INPUT  ARQVSAM.
+
+           IF FS-ARQVSAM               NOT EQUAL 00
+              DISPLAY 'ERRO NA ABERTURA'
+           END-IF.
+
+           MOVE LNK-CHAVE              TO REG-ARQVSAM-CHAVE.
+
+           START ARQVSAM KEY EQUAL REG-ARQVSAM-CHAVE
+              INVALID KEY
+              DISPLAY 'CHAVE NAO ENCONTRADA'
+           NOT INVALID KEY
+              READ ARQVSAM NEXT.
+
+       0100-INICIAR-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+            ADD 1                      TO ACU-LIDOS.
+
+
+            IF FS-ARQVSAM              NOT EQUAL 00
+               DISPLAY 'ERRO NA LEITURA ' FS-ARQVSAM
+            ELSE
+ATL1           IF REG-ARQVSAM-CHAVE   NOT GREATER LNK-CHAVE2
+.                 DISPLAY REG-ARQVSAM
+.                 ADD 1                TO ACU-VALIDOS
+.              END-IF
+ATL1
+            END-IF.
+
+            READ ARQVSAM NEXT.
+
+      *----------------------------------------------------------------*
+       0200-PROCESSAR-FIM.             EXIT.
+      *----------------------------------------------------------------**
+       0250-ESTATISTICA                SECTION.
+      *----------------------------------------------------------------*
+
+           DISPLAY '==== ESTATISTICAS ===='.
+           DISPLAY 'REGISTROS LIDOS   : ' ACU-LIDOS.
+ATL1       DISPLAY 'REGISTROS VALIDOS : ' ACU-VALIDOS.
+           DISPLAY '======================'.
+
+       0250-ESTATISTICA-FIM.           EXIT.
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------**
+           IF ACU-LIDOS                GREATER 0
+              PERFORM 0250-ESTATISTICA
+           END-IF.
+
+           CLOSE ARQVSAM.
+
+           IF FS-ARQVSAM               NOT EQUAL 00
+              DISPLAY 'ERRO AO FECHAR'
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0300-FINALIZAR-FIM.             EXIT.
+      *----------------------------------------------------------------**

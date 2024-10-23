@@ -1,0 +1,8 @@
+//F2403CMP JOB 'COMP COB',CLASS=C,MSGCLASS=X,NOTIFY=&SYSUID
+//*************************************************************
+//*  JOB UTILIZADO PARA COMPILAR PROGRAMAS COBOL
+//*************************************************************
+// JCLLIB ORDER=GR.GERAL.PROCLIB
+//COBCOMP  EXEC DFHCOBLB,LIB1=GR.F2403,NOME='F2403P14',LIB2=GR.GERAL
+//LKED.SYSIN    DD   *
+  NAME  F2403P14(R)

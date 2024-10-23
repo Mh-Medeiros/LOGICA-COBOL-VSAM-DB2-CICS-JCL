@@ -1,0 +1,371 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================**
+       PROGRAM-ID.                     F2403P06.
+      *================================================================*
+      * PROGRAMA..... : F2403P05
+      * PROGRAMADOR.. : MATHEUS MEDEIROS
+      * ANALISTA..... : IVAN SANCHES
+      * CONSULTORIA.. : FOURSYS
+      * DATA......... : 23 / 08 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO......:BALANCE LINE- ATUALIZACAO DE SALDOS DOS CLIENTES
+      *
+      *
+      *----------------------------------------------------------------*
+      * ARQUIVOS... :
+      * DDNAME..... :              TIPO...:                     BOOK..:
+      * CLIENTES                   INPUT                       BOOKCLI
+      * LANCAM                     INPUT                       BOOKLANC
+      * RELSAIDA                   OUTPUT
+      *
+      *================================================================*
+      * INC........ :
+      * BOOKLOG   - AREA DE GRAVACAO DE ERROS
+      * BOOK-ERRO - MENSAGENS DE ERROS
+      *
+      *----------------------------------------------------------------*
+      *  MODULOS...... :                                        BOOK..:
+      *  GRAVALOG                                              BOOKERRO
+      *================================================================**
+      *                    * ALTERACOES *                              *
+      *----------------------------------------------------------------*
+ALT1  * PROGRAMADOR.: MATHEUS MEDEIROS
+.     * ANALISTA....: IVAN SANCHES
+.     * CUNSULTORIA.: FOURSYS
+.     * DATA........: 27/08/2024
+.     * OBJETIVO....: IMPLEMENTAR A FUNCAO PARA CALCULAR OS TIPOS DE
+ALT1  * TRANSACAO - DEBITO (SUBTRACAO) E CREDITO (ADICAO)
+      *================================================================*
+       ENVIRONMENT                     DIVISION.
+      *================================================================**
+       CONFIGURATION                   SECTION.
+      *----------------------------------------------------------------**
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------**
+       INPUT-OUTPUT                    SECTION.
+      *----------------------------------------------------------------**
+       FILE-CONTROL.
+           SELECT CLIENTES  ASSIGN TO CLIENTES
+              FILE STATUS IS FS-CLIENTES.
+
+           SELECT LANCAM    ASSIGN TO LANCAM
+              FILE STATUS IS FS-LANCAM.
+
+           SELECT RELSAIDA  ASSIGN TO RELSAIDA
+              FILE STATUS IS FS-RELSAIDA.
+
+      *================================================================**
+       DATA                            DIVISION.
+      *================================================================**
+      *----------------------------------------------------------------**
+       FILE                            SECTION.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE ENTRADA(CLIENTES)
+      *                               LRECL = 035
+      *----------------------------------------------------------------**
+       FD  CLIENTES
+             RECORDING MODE IS F.
+       COPY 'BOOKCLI'.
+      *----------------------------------------------------------------**
+      *        INPUT  -  DADOS DO ARQUIVO DE ENTRADA(LANCAM)
+      *                               LRECL = 016
+      *----------------------------------------------------------------**
+
+       FD  LANCAM
+             RECORDING MODE IS F.
+       COPY 'BOOKLANC'.
+      *----------------------------------------------------------------**
+      *        OUTPUT -  DADOS DO ARQUIVO DE SAIDA(RELSAIDA)
+      *                               LRECL = 035
+      *----------------------------------------------------------------**
+
+       FD  RELSAIDA
+             RECORDING MODE IS F.
+       01 REG-RELSAIDA                 PIC X(035).
+
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                 SECTION.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== INICIO DA WORKING ====='.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE STATUS *****'.
+      *----------------------------------------------------------------*
+       01 FS-CLIENTES                  PIC 9(002)          VALUE ZEROS.
+       01 FS-LANCAM                    PIC 9(002)          VALUE ZEROS.
+       01 FS-RELSAIDA                  PIC 9(002)          VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** VARIAVEL DE APOIO ***** '.
+      *----------------------------------------------------------------*
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403P06'.
+       01 WRK-ARQCLI                   PIC X(008)          VALUE
+           'CLIENTES'.
+       01 WRK-ARQLANC                  PIC X(008)          VALUE
+           'LANCAM'.
+       01 WRK-ARQREL                   PIC X(008)          VALUE
+           'RELSAIDA'.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  VARIAVEL ACUMULADORA ***** '.
+      *----------------------------------------------------------------*
+       01 ACU-LIDOS                    PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-GRAVADOS                 PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-DESPREZ                  PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-ERRO                     PIC 9(003) COMP-3   VALUE ZEROS.
+      *----------------------------------------------------------------*
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '*****  BOOKS *****'.
+      *-------------------- BOOK DE MENSAGENS DE ERRO -----------------*
+       COPY BOOKERRO.
+      *-------------------- BOOK DE GRAVACAO DE ERROS -----------------*
+       COPY BOOKLOG.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== FIM DA WORKING ====='.
+      *================================================================
+       PROCEDURE                       DIVISION.
+      *================================================================*
+       0000-PRINCIPAL                  SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0100-INICIAR.
+           PERFORM 0140-TESTAR-VAZIO.
+           PERFORM 0200-PROCESSAR UNTIL FS-CLIENTES  EQUAL 10
+                                  AND   FS-LANCAM    EQUAL 10.
+           PERFORM 0300-FINALIZAR.
+
+           GOBACK.
+      *----------------------------------------------------------------*
+       0000-PRINCIPAL-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIAR                    SECTION.
+      *----------------------------------------------------------------*
+
+           OPEN INPUT  CLIENTES
+                INPUT  LANCAM
+                OUTPUT RELSAIDA.
+
+           PERFORM 0110-TESTAR-STATUS.
+
+
+
+
+       0100-INICIAR-FIM.               EXIT.
+      *----------------------------------------------------------------*
+       0110-TESTAR-STATUS              SECTION.
+      *----------------------------------------------------------------*
+       0115-TESTAR-LANCAM.
+      *----------------------------------------------------------------*
+
+           IF FS-LANCAM                NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQLANC         TO WRK-ARQUIVO
+              MOVE '0115'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE FS-LANCAM           TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0115-TESTAR-LANCAM-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0120-TESTAR-CLIENTES.
+      *----------------------------------------------------------------*
+
+           IF FS-CLIENTES              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQCLI          TO WRK-ARQUIVO
+              MOVE '0120'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE FS-CLIENTES         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0130-TESTAR-RELSAIDA.
+      *----------------------------------------------------------------*
+
+           IF FS-RELSAIDA              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQREL          TO WRK-ARQUIVO
+              MOVE '0130'              TO WRK-SECAO
+              MOVE FS-RELSAIDA         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+       0110-TESTAR-STATUS-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0140-TESTAR-VAZIO               SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0150-LER-DADOS.
+
+           IF FS-CLIENTES              EQUAL 10
+              DISPLAY 'ARQUIVO CLIENTES VAZIO'
+           END-IF.
+
+           IF FS-LANCAM                EQUAL 10
+              DISPLAY 'ARQUIVO LANCAM   VAZIO'
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0140-TESTAR-VAZIO-FIM.          EXIT.
+      *----------------------------------------------------------------*
+       0150-LER-DADOS                  SECTION.
+      *----------------------------------------------------------------*
+       0155-LER-CLIENTES.
+
+           READ CLIENTES.
+
+
+           IF FS-CLIENTES              NOT EQUAL 10 AND NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQCLI          TO WRK-ARQUIVO
+              MOVE '0155'              TO WRK-SECAO
+              MOVE WRK-ERRO-LEITURA    TO WRK-MENSAGEM
+              MOVE FS-CLIENTES         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+      *----------------------------------------------------------------*
+       0160-LER-LANCAM.
+
+           READ LANCAM.
+
+           IF FS-LANCAM                NOT EQUAL 10 AND NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQLANC         TO WRK-ARQUIVO
+              MOVE '0160'              TO WRK-SECAO
+              MOVE WRK-ERRO-LEITURA    TO WRK-MENSAGEM
+              MOVE FS-LANCAM           TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+           IF FS-LANCAM                EQUAL 10
+               MOVE HIGH-VALUES        TO REG-LANCAM-AGCONTA
+           END-IF.
+
+       0150-LER-DADOS-FIM.             EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
+           ADD 1                       TO ACU-LIDOS.
+
+
+           EVALUATE TRUE
+
+           WHEN REG-CLIENTES-AGCONTA   EQUAL REG-LANCAM-AGCONTA
+ALT1          PERFORM 0210-CALCULA-SALDO
+              PERFORM 0160-LER-LANCAM
+
+           WHEN REG-CLIENTES-AGCONTA   LESS REG-LANCAM-AGCONTA
+              MOVE REG-CLIENTES        TO REG-RELSAIDA
+              WRITE  REG-RELSAIDA
+              ADD 1                    TO ACU-GRAVADOS
+              PERFORM 0155-LER-CLIENTES
+
+           WHEN OTHER
+              DISPLAY 'CHAVE NAO ENCONTRADA:' REG-LANCAM
+              ADD 1                    TO ACU-DESPREZ
+              PERFORM 0160-LER-LANCAM
+           END-EVALUATE.
+
+      *----------------------------------------------------------------*
+       0200-PROCESSAR-FIM.             EXIT.
+      *----------------------------------------------------------------*
+ALT1   0210-CALCULA-SALDO              SECTION.
+      *----------------------------------------------------------------*
+.
+.          EVALUATE REG-LANCAM-TIPO
+.             WHEN 'C'
+.             ADD REG-LANCAM-SALDO     TO    REG-CLIENTES-SALDO
+.
+.             WHEN 'D'
+.             SUBTRACT REG-CLIENTES-SALDO
+.                                      FROM  REG-LANCAM-SALDO
+.
+.             GIVING REG-CLIENTES-SALDO
+.
+.             WHEN OTHER
+.             DISPLAY 'TRANSACAO NAO ENCONTRADA:' REG-LANCAM
+.             ADD 1                    TO ACU-ERRO
+.          END-EVALUATE.
+.
+.
+ALT1   0210-CALCULA-SALDO-FIM.         EXIT.
+      *----------------------------------------------------------------*
+       0220-ESTATISTICA                SECTION.
+      *----------------------------------------------------------------*
+
+           IF ACU-LIDOS                GREATER 0
+               DISPLAY '=========== STATUS ==========='
+               DISPLAY 'REGISTROS LIDOS            :' ACU-LIDOS
+               DISPLAY 'REGISTROS GRAVADOS         :' ACU-GRAVADOS
+               DISPLAY 'REGISTROS NAO ENCONTRADOS  :' ACU-DESPREZ
+ALT1           DISPLAY 'TRANSACOES NAO RECONHECIDAS:' ACU-ERRO
+
+           END-IF.
+
+      *----------------------------------------------------------------**
+       0300-FINALIZAR                  SECTION.
+      *----------------------------------------------------------------**
+           PERFORM 0220-ESTATISTICA.
+
+       0310-FINALIZAR-FS-CLIENTES.
+      *----------------------------------------------------------------*
+
+           CLOSE CLIENTES
+                 LANCAM
+                 RELSAIDA.
+
+           IF FS-CLIENTES              NOT EQUAL  00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQCLI          TO WRK-ARQUIVO
+              MOVE '0310'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE FS-CLIENTES         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0315-FINALIZAR-LANCAM.
+      *----------------------------------------------------------------*
+
+           IF FS-LANCAM                NOT EQUAL  00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQLANC         TO WRK-ARQUIVO
+              MOVE '0315'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE FS-LANCAM           TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0320-FINALIZAR-RELSAIDA.                                         *
+      *----------------------------------------------------------------*
+
+           IF FS-RELSAIDA               NOT EQUAL  00
+               MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+               MOVE WRK-ARQREL          TO WRK-ARQUIVO
+               MOVE '0320'              TO WRK-SECAO
+               MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+               MOVE FS-RELSAIDA         TO WRK-STATUS
+               PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0300-FINALIZAR-FIM.             EXIT.
+      *----------------------------------------------------------------**
+       9999-TRATA-ERRO                 SECTION.
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGERRO   USING WRK-DADOS.
+           GOBACK.
+
+       9999-TRATA-ERRO-FIM.            EXIT.
+      *----------------------------------------------------------------*

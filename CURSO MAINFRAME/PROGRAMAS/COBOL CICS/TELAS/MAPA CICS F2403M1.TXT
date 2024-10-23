@@ -1,0 +1,78 @@
+F2403M1 DFHMSD TYPE=MAP,MODE=INOUT,LANG=COBOL,CTRL=FREEKB,TIOAPFX=YES
+MAPFILE DFHMDI SIZE=(24,80)
+        DFHMDF POS=(1,25),                                             *
+               LENGTH=20,                                              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='CONSULTA DE CLIENTES'
+*********************************************
+        DFHMDF POS=(4,20),                                             *
+               LENGTH=10,                    TAM DO TEXTO              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='CODIGO...:'
+*********************************************
+CODIGO  DFHMDF POS=(4,31),                                             *
+               LENGTH=06,                                              *
+               ATTRB=(UNPROT,IC,NUM)         IC = CURSOR
+*********************************************
+        DFHMDF POS=(4,38),                                             *
+               LENGTH=0,                                               *
+               ATTRB=ASKIP
+*********************************************
+*********************************************
+        DFHMDF POS=(6,20),                                             *
+               LENGTH=10,                                              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='NOME.....:'
+*********************************************
+NOME    DFHMDF POS=(6,31),                                             *
+               LENGTH=20,                                              *
+               ATTRB=(PROT)
+*********************************************
+        DFHMDF POS=(6,52),                                             *
+               LENGTH=0,                                               *
+               ATTRB=ASKIP
+*********************************************
+*********************************************
+        DFHMDF POS=(8,20),                                             *
+               LENGTH=10,                                              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='LOCAL....:'
+*********************************************
+LOCAL   DFHMDF POS=(8,31),                                             *
+               LENGTH=20,                                              *
+               ATTRB=(PROT)
+*********************************************
+        DFHMDF POS=(08,52),                                            *
+               LENGTH=0,                                               *
+               ATTRB=ASKIP
+*********************************************
+*********************************************
+        DFHMDF POS=(10,20),                                            *
+               LENGTH=10,                                              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='CARTAO...:'
+*********************************************
+CARTAO  DFHMDF POS=(10,31),                                            *
+               LENGTH=10,                                              *
+               ATTRB=(PROT)
+*********************************************
+        DFHMDF POS=(10,42),                                            *
+               LENGTH=0,                                               *
+               ATTRB=ASKIP
+*********************************************
+*********************************************
+        DFHMDF POS=(20,20),                                            *
+               LENGTH=10,                                              *
+               ATTRB=ASKIP,                                            *
+               INITIAL='MENSAGEM.:'
+*********************************************
+MSG     DFHMDF POS=(20,31),                                            *
+               LENGTH=30,                                              *
+               ATTRB=(PROT)
+*********************************************
+        DFHMDF POS=(10,62),                                            *
+               LENGTH=0,                                               *
+               ATTRB=ASKIP
+*********************************************
+        DFHMSD TYPE=FINAL
+        END

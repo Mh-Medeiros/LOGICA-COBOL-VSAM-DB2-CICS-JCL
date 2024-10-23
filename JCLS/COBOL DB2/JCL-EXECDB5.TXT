@@ -1,0 +1,30 @@
+//F2403EDB JOB 'COMPDB2',MSGCLASS=X,CLASS=C,NOTIFY=&SYSUID,TIME=(0,01)
+//*-------------------------------------------------------------------*
+//*      JOB DE EXECUCAO   DE PROGRAMA COBOL COM DB2 BATCH            *
+//*-------------------------------------------------------------------*
+//*************************************************
+//****************************************************
+//**               APAGAR O RELFUNC                  *
+//****************************************************
+//STEP001  EXEC PGM=IEFBR14
+//ARQUIVO  DD   DSN=GR.F2403.RELFUNC,DISP=(MOD,DELETE,DELETE),
+//         SPACE=(TRK,(1,1),RLSE)
+//*-------------------------------------------------------------------*
+//EXECDB   EXEC PGM=IKJEFT01,DYNAMNBR=20
+//STEPLIB  DD   DSN=DSN810.SDSNLOAD,DISP=SHR
+//         DD   DSN=GR.GERAL.LOADLIB,DISP=SHR
+//DBRMLIB  DD   DSN=DSN810.DBRMLIB.DATA,DISP=SHR
+//SYSTSPRT DD   SYSOUT=*
+//SYSPRINT DD   SYSOUT=*
+//*YSOUT   DD   SYSOUT=*
+//SYSTSIN  DD   *
+  DSN  SYSTEM(DB8G)
+  RUN PROGRAM(F2403DB5) PLAN(F2403DB5) -
+       LIB('GR.GERAL.LOADLIB')
+  END
+//LOGERROS DD  DSN=GR.F2403.LOGERROS,DISP=SHR
+//LOGDB2   DD  DSN=GR.F2403.LOGDB2,DISP=SHR
+//*************************************************************
+//RELFUNC  DD DSN=GR.F2403.RELFUNC,DISP=(NEW,CATLG,DELETE),
+//         SPACE=(TRK,(1,1),RLSE),
+//         DCB=(LRECL=66,RECFM=FB,BLKSIZE=0)

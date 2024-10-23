@@ -1,0 +1,361 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================*
+       PROGRAM-ID.                     F2403DB5.
+      *================================================================*
+      * PROGRAMA   : F2403DB5
+      * PROGRAMADOR: MATHEUS H MEDEIROS
+      * ANALISTA   : IVAN SANCHES
+      * CONSULTORIA: FOURSYS
+      * DATA.......: 25 / 09 / 2024
+      *----------------------------------------------------------------*
+      * OBJETIVO...: FAZER A LEITURA DE TODOS OS REGISTROS DA TABELA E
+      * GRAVAR NO ARQUIVO SEQUENCIAL.
+      *----------------------------------------------------------------*
+      * BASE DE DADOS
+      * TABELAS.........:                                INCLUDE/BOOKS
+      *  F2403.FUNC                                         BOOKFUNC
+      *
+      *----------------------------------------------------------------*
+      * ARQUIVOS...:
+      * DDNAME.....:                I/O                  INCLUDE/BOOKS
+      *  RELFUNC                  OUTPUT
+      *----------------------------------------------------------------*
+      * INC'S......:
+      * BOOKLOG  ->  GRAVALOG
+      * BOOKDB2  ->  GRAVADB2
+      * BOOKFUC  ->  LAYOUT DA TABELA
+      * BOOKERRO ->  MENSAGENS DE ERRO
+      *----------------------------------------------------------------*
+      * MODULOS...:
+      * GRAVALOG -> FORAMTACAO E GRAVACAO DE ERROS - RELFUNC
+      * GRAVADB2 -> FORMATACAO E GRAVACAO DE ERROS - DB2
+      *
+      *================================================================*
+
+       ENVIRONMENT                     DIVISION.
+
+      *================================================================*
+
+       CONFIGURATION                   SECTION.
+
+      *================================================================*
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------*
+
+       INPUT-OUTPUT                    SECTION.
+
+      *----------------------------------------------------------------*
+
+       FILE-CONTROL.
+           SELECT RELFUNC ASSIGN TO RELFUNC
+              FILE STATUS IS FS-RELFUNC.
+
+      *----------------------------------------------------------------*
+
+       DATA                            DIVISION.
+
+      *================================================================*
+
+       FILE                            SECTION.
+      *----------------------------------------------------------------*
+      *                                                                *
+      *  OUTPUT - DADOS DO ARQUIVO DE SAIDA (RELFUNC) LRECL = 066      *
+      *                                                                *
+      *----------------------------------------------------------------*
+
+       FD  RELFUNC
+            RECORDING MODE IS F.
+
+       01  WRK-RELFUNC                 PIC X(066).
+
+      *----------------------------------------------------------------*
+       WORKING-STORAGE                 SECTION.
+
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** INICIO DA WORKING *****'.
+
+      *================================================================*
+       01  FILLER                      PIC X(050)          VALUE
+           '====* VARIAVEL DE STATUS *===='.
+
+       01 FS-RELFUNC                   PIC 9(002)          VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '====* VARIAVEIS TEMPORARIAS *===='.
+
+       01 WRK-REG-FUNC.
+          05 WRK-DB2-IDFUNC            PIC 9(009)          VALUE ZEROS.
+          05 WRK-DB2-NOMEFUNC          PIC X(030)          VALUE SPACES.
+          05 WRK-DB2-DEPTOFUNC         PIC X(003)          VALUE SPACES.
+          05 WRK-DB2-SALFUNC           PIC 9(003)V99       VALUE ZEROS.
+          05 WRK-DB2-FILHOSFUNC        PIC 9(009)          VALUE ZEROS.
+          05 WRK-DB2-ADMISFUNC         PIC X(010)          VALUE SPACES.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '====* VARIAVEIS DE APOIO * ===='.
+
+       01 WRK-ID                       PIC  9(005)         VALUE ZEROS.
+       01 WRK-SQLCODE                  PIC -999            VALUE ZEROS.
+       01 WRK-NULO                     PIC S9(004) COMP    VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '==== * VARIAVEL DE ACUMULADORA * ===='.
+
+       01 ACU-LIDOS                    PIC 9(003) COMP-3   VALUE ZEROS.
+       01 ACU-GRAVADOS                 PIC 9(003) COMP-3   VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '==== * VARIAVEIS DE ERRO *==== '.
+
+       01 WRK-PROG-ON                  PIC X(008)          VALUE
+           'F2403DB5'.
+       01 WRK-ARQ-ON                   PIC X(008)          VALUE
+           'RELFUNC'.
+       01 WRK-TABELA                   PIC X(020)          VALUE
+           'F2403.FUNC'.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '====  *AREA DOS  BOOKS * ==== '.
+      *----------------------- BOOK DE MENSAGEM DE ERRO ---------------*
+
+       COPY BOOKERRO.
+
+      *----------------------- BOOK DE GRAVACAO DE ERROS --------------*
+
+       COPY BOOKLOG.
+
+       COPY BOOKDB2.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '==== * AREA DB2 *===='.
+      *----------------------------------------------------------------*
+
+           EXEC SQL
+              INCLUDE SQLCA
+           END-EXEC.
+
+           EXEC SQL
+              INCLUDE BOOKFUNC
+           END-EXEC.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '==== * AREA CURSOR * ===='.
+
+           EXEC SQL
+              DECLARE DADOS CURSOR FOR
+              SELECT IDFUNC,NOMEFUNC,DEPTOFUNC,SALFUNC,FILHOSFUNC,
+                     ADMISFUNC
+                     FROM F2403.FUNC
+           END-EXEC.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '***** FIM DA WORKING *****'.
+      *================================================================*
+       PROCEDURE                       DIVISION.
+      *================================================================*
+
+       0000-PRINCIPAL                  SECTION.
+
+           PERFORM 0100-INICIALIZAR.
+           PERFORM 0200-PROCESSAR.
+           PERFORM 0300-FINALIZAR.
+           GOBACK.
+
+       0000-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0100-INICIALIZAR                SECTION.
+
+           OPEN OUTPUT RELFUNC.
+
+           PERFORM 0110-TESTAR-STATUS.
+
+       0100-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0110-TESTAR-STATUS              SECTION.
+
+           IF FS-RELFUNC               NOT EQUAL 00
+
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0110'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE FS-RELFUNC          TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO-RELFUNC
+
+           END-IF.
+
+       0110-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.
+
+           PERFORM 0220-ABERTURA-SQL.
+
+           PERFORM 0240-LEITURA-SQL.
+
+           PERFORM UNTIL SQLCODE       EQUAL 100
+
+              IF WRK-NULO              EQUAL -1
+                 MOVE 0                TO DB2-FILHOSFUNC
+              END-IF
+
+              MOVE WRK-REG-FUNC        TO WRK-RELFUNC
+              WRITE WRK-RELFUNC
+
+              IF FS-RELFUNC            NOT EQUAL 00
+                 DISPLAY 'ERRO NA GRAVACAO! STATUS: ' FS-RELFUNC
+              ELSE
+                 ADD 1                 TO ACU-GRAVADOS
+              END-IF
+
+              PERFORM 0240-LEITURA-SQL
+
+              ADD 1                    TO ACU-LIDOS
+
+           END-PERFORM.
+
+       0200-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0220-ABERTURA-SQL               SECTION.
+
+           EXEC SQL
+
+              OPEN DADOS
+
+           END-EXEC.
+
+           PERFORM 0230-TESTAR-SQL.
+
+       0220-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0230-TESTAR-SQL                 SECTION.
+
+           IF (SQLCODE                 NOT EQUAL 0) OR
+              (SQLWARN                 EQUAL 'W')
+
+              MOVE SQLCODE             TO WRK-SQLCODE
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA-DB2
+              MOVE '0230'              TO WRK-SECAO-DB2
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM-DB2
+              MOVE WRK-SQLCODE         TO WRK-SQLCODE-DB2
+
+              PERFORM 9998-TRATA-ERRO-DB2
+
+           END-IF.
+
+       0230-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0240-LEITURA-SQL                SECTION.
+
+           EXEC SQL
+              FETCH DADOS
+              INTO :DB2-IDFUNC,
+                   :DB2-NOMEFUNC,
+                   :DB2-DEPTOFUNC,
+                   :DB2-SALFUNC,
+                   :DB2-FILHOSFUNC INDICATOR :WRK-NULO,
+                   :DB2-ADMISFUNC
+           END-EXEC.
+
+           IF (SQLCODE                 NOT EQUAL ZEROS AND +100) OR
+              (SQLWARN0                EQUAL 'W')
+
+              MOVE SQLCODE             TO WRK-SQLCODE
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA-DB2
+              MOVE '0240'              TO WRK-SECAO-DB2
+              MOVE WRK-ERRO-LEITURA    TO WRK-MENSAGEM-DB2
+              MOVE WRK-SQLCODE         TO WRK-SQLCODE-DB2
+              PERFORM 9998-TRATA-ERRO-DB2
+
+           END-IF.
+
+           MOVE DB2-IDFUNC             TO WRK-DB2-IDFUNC.
+           MOVE DB2-NOMEFUNC           TO WRK-DB2-NOMEFUNC.
+           MOVE DB2-DEPTOFUNC          TO WRK-DB2-DEPTOFUNC.
+           MOVE DB2-SALFUNC            TO WRK-DB2-SALFUNC.
+           MOVE DB2-FILHOSFUNC         TO WRK-DB2-FILHOSFUNC.
+           MOVE DB2-ADMISFUNC          TO WRK-DB2-ADMISFUNC.
+
+       0240-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.
+
+           IF ACU-LIDOS GREATER 0
+
+             PERFORM 0310-ESTATISTICA
+
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0310-FINALIZAR-RELFUNC.
+
+           CLOSE RELFUNC
+
+           IF FS-RELFUNC               NOT EQUAL 00
+
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0310'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE FS-RELFUNC          TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO-RELFUNC
+
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0320-FINALIZAR-SQL.
+
+           EXEC SQL
+
+              CLOSE DADOS
+
+           END-EXEC.
+
+           IF (SQLCODE                 NOT EQUAL 0 AND +100) OR
+              (SQLWARN0                EQUAL 'W')
+
+              MOVE SQLCODE             TO WRK-SQLCODE
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA-DB2
+              MOVE '0320'              TO WRK-SECAO-DB2
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM-DB2
+              MOVE WRK-SQLCODE         TO WRK-SQLCODE-DB2
+              PERFORM 9998-TRATA-ERRO-DB2
+
+           END-IF.
+
+           GOBACK.
+
+       0300-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       0310-ESTATISTICA                SECTION.
+
+           DISPLAY '======== STATUS ============'.
+           DISPLAY 'REGISTROS LIDOS   : ' ACU-LIDOS.
+           DISPLAY 'REGISTROS GRAVADOS: ' ACU-GRAVADOS.
+
+       0310-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       9998-TRATA-ERRO-DB2             SECTION.
+
+           CALL WRK-PROGRAMA-LOGDB2    USING WRK-DADOS-DB2.
+           GOBACK.
+
+       9998-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+       9999-TRATA-ERRO-RELFUNC         SECTION.
+
+           CALL WRK-PROGRAMA-LOGERRO   USING WRK-DADOS.
+           GOBACK.
+
+       9999-99-FIM.                    EXIT.

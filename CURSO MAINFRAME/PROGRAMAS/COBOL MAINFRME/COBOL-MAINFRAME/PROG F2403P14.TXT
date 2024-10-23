@@ -1,6 +1,6 @@
-       IDENTIFICATION                          DIVISION.
+       IDENTIFICATION                  DIVISION.
       *================================================================**
-       PROGRAM-ID.                             F2403P14.
+       PROGRAM-ID.                     F2403P14.
       *================================================================*
       * PROGRAMA..... : F2403P14
       * PROGRAMADOR.. : MATHEUS MEDEIROS
@@ -26,19 +26,19 @@
       *  MODULOS...... :                                        BOOK
       *  GRAVALOG                                              BOOKLOG
       *================================================================**
-       ENVIRONMENT                               DIVISION.
+       ENVIRONMENT                     DIVISION.
       *================================================================**
 
 
       *----------------------------------------------------------------**
-       CONFIGURATION                             SECTION.
+       CONFIGURATION                   SECTION.
       *----------------------------------------------------------------**
 
        SPECIAL-NAMES.
            DECIMAL-POINT IS COMMA.
 
       *----------------------------------------------------------------**
-       INPUT-OUTPUT                              SECTION.
+       INPUT-OUTPUT                    SECTION.
       *----------------------------------------------------------------**
        FILE-CONTROL.
            SELECT ARQVSAM  ASSIGN TO ARQVSAM
@@ -53,10 +53,10 @@
       *                                                                *
       *================================================================*
       *================================================================**
-       DATA                                      DIVISION.
+       DATA                            DIVISION.
       *================================================================**
       *----------------------------------------------------------------**
-       FILE                                      SECTION.
+       FILE                            SECTION.
       *----------------------------------------------------------------**
       *        INPUT  -  DADOS DO ARQUIVO DE SAIDA(ARQVSAM)
       *                               LRECL = 58
@@ -70,7 +70,7 @@
           05 REG-ARQVSAM-STREAMING     PIC X(010).
           05 REG-ARQVSAM-VALASS        PIC 9(005).
       *----------------------------------------------------------------*
-       WORKING-STORAGE                           SECTION.
+       WORKING-STORAGE                 SECTION.
       *----------------------------------------------------------------*
        01  FILLER                      PIC X(050)          VALUE
            '===== INICIO DA WORKING ====='.
@@ -116,14 +116,18 @@
        01  FILLER                      PIC X(050)          VALUE
            '===== FIM DA WORKING ====='.
       *================================================================
-       PROCEDURE                                 DIVISION.
+       PROCEDURE                       DIVISION.
       *================================================================*
        0000-PRINCIPAL                  SECTION.
       *----------------------------------------------------------------*
 
            PERFORM 0100-INICIAR.
+
            PERFORM 0200-PROCESSAR.
+
            PERFORM 0300-FINALIZAR.
+
+           GOBACK.
 
       *----------------------------------------------------------------*
        0000-PRINCIPAL-FIM.             EXIT.
@@ -138,37 +142,39 @@
            ACCEPT WRK-ACAO.
            ACCEPT WRK-REG-LAYOUT.
 
-           IF WRK-ACAO EQUAL SPACES OR WRK-REG-LAYOUT EQUAL SPACES
-               DISPLAY 'DADOS INCORRETOS REINSIRA OS DADOS'
-               PERFORM 0300-FINALIZAR
+           IF WRK-ACAO                 EQUAL SPACES
+                                       OR WRK-REG-LAYOUT EQUAL SPACES
+
+              DISPLAY 'DADOS INCORRETOS REINSIRA OS DADOS'
+              PERFORM 0300-FINALIZAR
            END-IF.
 
 
-           MOVE WRK-REG-LAYOUT-CHAVE  TO REG-ARQVSAM-CHAVE.
+           MOVE WRK-REG-LAYOUT-CHAVE   TO REG-ARQVSAM-CHAVE.
 
-
-
-
+      *----------------------------------------------------------------*
        0100-INICIAR-FIM.               EXIT.
       *----------------------------------------------------------------*
        0110-TESTAR-STATUS              SECTION.
 
            IF FS-ARQVSAM               NOT EQUAL 00
-               MOVE WRK-PROG-ON        TO WRK-PROGRAMA
-               MOVE WRK-ARQ-ON         TO WRK-ARQUIVO
-               MOVE '0110'             TO WRK-SECAO
-               MOVE WRK-ERRO-ABERTURA  TO WRK-MENSAGEM
-               DISPLAY ' ERRO NA ABERTURA ' WRK-ARQ-ON
-               MOVE FS-ARQVSAM         TO WRK-STATUS
-               PERFORM 9999-TRATA-ERRO
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0110'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              DISPLAY ' ERRO NA ABERTURA ' WRK-ARQ-ON
+              MOVE FS-ARQVSAM          TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
            END-IF.
 
 
            PERFORM 0130-LER-DADOS.
 
+      *----------------------------------------------------------------*
        0110-TESTAR-STATUS-FIM.         EXIT.
       *----------------------------------------------------------------*
        0130-LER-DADOS                  SECTION.
+      *----------------------------------------------------------------*
 
            READ ARQVSAM.
 
@@ -181,9 +187,11 @@
               PERFORM 9999-TRATA-ERRO
            END-IF.
 
+      *----------------------------------------------------------------*
        0130-LER-DADOS-FIM.             EXIT.
       *----------------------------------------------------------------*
        0200-PROCESSAR                  SECTION.
+      *----------------------------------------------------------------*
 
            EVALUATE WRK-ACAO
 
@@ -195,7 +203,7 @@
 
                 PERFORM 0390-CONSISTENCIA
 
-                IF WRK-STATUS-ERRO EQUAL 0
+                IF WRK-STATUS-ERRO     EQUAL 0
                    PERFORM 0230-GRAVACAO
                 ELSE
                    DISPLAY 'ERRO (ACAO OU CODIGO EM BRANCO)'
@@ -209,7 +217,7 @@
 
                 PERFORM 0390-CONSISTENCIA
 
-                IF WRK-STATUS-ERRO EQUAL 0
+                IF WRK-STATUS-ERRO     EQUAL 0
                    PERFORM 0250-REGRAVACAO
                 ELSE
                    DISPLAY 'ERRO AO REGRAVAR'
@@ -221,6 +229,8 @@
                 DISPLAY 'OPCAO INVALIDA'
 
            END-EVALUATE.
+
+      *----------------------------------------------------------------*
        0200-PROCESSAR-FIM.             EXIT.
       *----------------------------------------------------------------*
        0220-LEITURA                    SECTION.
@@ -240,9 +250,11 @@
 
            END-EVALUATE.
 
+      *----------------------------------------------------------------*
        0220-LEITURA-FIM.               EXIT.
       *----------------------------------------------------------------*
        0230-GRAVACAO                   SECTION.
+      *----------------------------------------------------------------*
 
            MOVE WRK-REG-LAYOUT         TO REG-ARQVSAM.
 
@@ -261,34 +273,36 @@
 
            END-EVALUATE.
 
-
+      *----------------------------------------------------------------*
        0230-GRAVACAO-FIM.              EXIT.
       *----------------------------------------------------------------**
        0240-EXCLUSAO                   SECTION.
+      *----------------------------------------------------------------*
 
            PERFORM 0130-LER-DADOS.
 
            EVALUATE FS-ARQVSAM
 
               WHEN 00
-                  DELETE ARQVSAM
-                  DISPLAY 'REGISTRO EXCLUIDO : ' REG-ARQVSAM
+                 DELETE ARQVSAM
+                 DISPLAY 'REGISTRO EXCLUIDO : ' REG-ARQVSAM
 
               WHEN 23
-                  DISPLAY 'REGISTRO NAO ENCONTRADO :' REG-ARQVSAM
+                 DISPLAY 'REGISTRO NAO ENCONTRADO :' REG-ARQVSAM
 
               WHEN OTHER
-                  DISPLAY 'ERRO AO EXCLUIR REGISTRO'
+                 DISPLAY 'ERRO AO EXCLUIR REGISTRO'
 
            END-EVALUATE.
 
        0240-EXCLUSAO-FIM.              EXIT.
       *----------------------------------------------------------------*
        0250-REGRAVACAO                 SECTION.
+      *----------------------------------------------------------------*
 
-           MOVE WRK-REG-LAYOUT-CHAVE   TO REG-ARQVSAM-CHAVE
+           MOVE WRK-REG-LAYOUT-CHAVE   TO REG-ARQVSAM-CHAVE.
 
-           PERFORM 0130-LER-DADOS
+           PERFORM 0130-LER-DADOS.
 
            EVALUATE FS-ARQVSAM
                WHEN 00
@@ -303,6 +317,7 @@
 
                END-EVALUATE.
 
+      *----------------------------------------------------------------*
        0250-REGRAVACAO-FIM.            EXIT.
       *----------------------------------------------------------------*
        0300-FINALIZAR                  SECTION.
@@ -318,9 +333,8 @@
               MOVE FS-ARQVSAM          TO WRK-STATUS
               PERFORM 9999-TRATA-ERRO
            END-IF.
-           GOBACK.
 
-
+      *----------------------------------------------------------------*
        0300-FINALIZAR-FIM.             EXIT.
       *----------------------------------------------------------------**
        0390-CONSISTENCIA               SECTION.

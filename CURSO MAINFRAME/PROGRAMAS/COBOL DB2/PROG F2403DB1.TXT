@@ -1,0 +1,68 @@
+       IDENTIFICATION                  DIVISION.
+      *================================================================
+       PROGRAM-ID.                     F2403BD1.
+      *================================================================
+      * PROGRAMA   : F2403DB1
+      * PROGRAMADOR: MATHEUS H MEDEIROS
+      * ANALISTA   : IVAN SANCHES
+      * CONSULTORIA: FOURSYS
+      * DATA.......: 20 / 09 / 2024
+      *----------------------------------------------------------------
+      * OBJETIVO...:
+      *
+      *----------------------------------------------------------------
+      *================================================================
+       ENVIRONMENT                     DIVISION.
+      *================================================================
+       CONFIGURATION                   SECTION.
+      *================================================================
+       DATA                            DIVISION.
+      *================================================================
+       WORKING-STORAGE                 SECTION.
+           EXEC SQL
+              INCLUDE SQLCA
+           END-EXEC.
+
+           EXEC SQL
+              INCLUDE BOOKFUNC
+           END-EXEC.
+
+       01 WRK-ID                       PIC 9(005)          VALUE ZEROS.
+       01 WRK-SQLCODE                  PIC -999            VALUE ZEROS.
+       01 WRK-NULO                     PIC S9(004) COMP    VALUE ZEROS.
+      *================================================================
+       PROCEDURE                       DIVISION.
+      *================================================================
+           ACCEPT WRK-ID.
+           MOVE   WRK-ID               TO DB2-IDFUNC.
+
+           EXEC SQL
+              SELECT IDFUNC,NOMEFUNC,DEPTOFUNC,SALFUNC,FILHOSFUNC,
+                     ADMISFUNC
+              INTO     :DB2-IDFUNC,
+                       :DB2-NOMEFUNC,
+                       :DB2-DEPTOFUNC,
+                       :DB2-SALFUNC,
+                       :DB2-FILHOSFUNC INDICATOR :WRK-NULO,
+                       :DB2-ADMISFUNC
+                 FROM  F2403.FUNC
+                 WHERE IDFUNC =:DB2-IDFUNC
+           END-EXEC.
+
+           IF WRK-NULO                 EQUAL -1
+              MOVE 0                   TO DB2-FILHOSFUNC
+           END-IF.
+
+           IF SQLCODE                  EQUAL 0
+              DISPLAY 'NOME DO FUNCIONARIO: ' DB2-NOMEFUNC
+              DISPLAY 'SALARIO            : ' DB2-SALFUNC
+              DISPLAY 'FILHOS             : ' DB2-FILHOSFUNC
+
+           END-IF.
+
+           IF SQLCODE                  EQUAL 100
+              DISPLAY 'FUNCIONARIO NAO ENCONTRADO'
+           END-IF.
+
+
+           STOP RUN.
