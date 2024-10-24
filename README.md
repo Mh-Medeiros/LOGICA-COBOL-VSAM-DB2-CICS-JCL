@@ -1,2 +1,2 @@
-# CURSO-COBOL
+# Recursos COBOL
  
