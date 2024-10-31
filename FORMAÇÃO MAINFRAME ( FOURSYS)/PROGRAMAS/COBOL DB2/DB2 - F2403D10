@@ -1,0 +1,421 @@
+       IDENTIFICATION                  DIVISION.                        00010000
+      *================================================================*00011001
+       PROGRAM-ID.                     F2403D10.                        00020000
+      *================================================================*00030001
+      * PROGRAMA   : F2403D10                                           00032001
+      * PROGRAMADOR: MATHEUS H MEDEIROS                                 00033001
+      * ANALISTA   : IVAN SANCHES                                       00034001
+      * CONSULTORIA: FOURSYS                                            00035001
+      * DATA.......: 25 / 10  / 2024                                    00036001
+      *----------------------------------------------------------------*00037001
+      * OBJETIVO...: FAZER A INCLUSAO DO CAMPO ID NOS REGISTROS         00038001
+      *                                                                 00039001
+      *----------------------------------------------------------------*00039101
+      * BASE DE DADOS                                                   00039201
+      * TABELAS.........:                                INCLUDE/BOOK   00039301
+      *  F2403.FUNC                                         BOOKFUNC    00039401
+      *                                                                 00039501
+      *----------------------------------------------------------------*00039601
+      * ARQUIVOS...:                                                    00039701
+      * DDNAME.....:                I/O                  INCLUDE/BOOKS  00039801
+      *  FUNC                      INPUT                                00039901
+      *
+      *----------------------------------------------------------------*00040001
+      * INC'S......:                                                    00040101
+      * BOOKDB2  ->  GRAVADB2                                           00040201
+      * BOOKLOG  ->  GRAVALOG                                           00040301
+      * BOOKERRO ->  MENSAGENS DE ERRO                                  00040401
+      *                                                                 00040501
+      *----------------------------------------------------------------*00040601
+      * MODULOS...:                                                     00040701
+      * GRAVADB2 -> FORMATACAO E GRAVACAO DE ERROS - DB2                00040801
+      * GRAVALOG -> FORAMTACAO E GRAVACAO DE ERROS - FUNC               00040901
+      *                                                                 00041001
+      *================================================================*00041101
+       ENVIRONMENT                     DIVISION.                        00042000
+      *================================================================*00050001
+       CONFIGURATION                   SECTION.                         00060000
+      *----------------------------------------------------------------*
+
+       SPECIAL-NAMES.
+           DECIMAL-POINT IS COMMA.
+
+      *----------------------------------------------------------------*
+       INPUT-OUTPUT                    SECTION.
+      *----------------------------------------------------------------*
+
+       FILE-CONTROL.
+           SELECT FUNC ASSIGN TO FUNC
+               FILE STATUS    IS WRK-FS-FUNC.
+
+      *================================================================*00070001
+       DATA                            DIVISION.                        00080000
+      *================================================================*00090001
+       FILE                            SECTION.
+      *----------------------------------------------------------------*
+      *
+      *      INPUT - DADOS DO ARQUIVO (F2403.FUNC) -> LRECL = 057
+      *
+      *----------------------------------------------------------------*
+
+       FD  FUNC
+           RECORDING MODE IS F
+           BLOCK CONTAINS 0 RECORDS.
+
+       01  WRK-REG-FUNC                PIC X(057).
+
+      *================================================================*
+       WORKING-STORAGE                 SECTION.                         00100000
+      *================================================================*00110001
+       01  FILLER                      PIC X(050)          VALUE        00110401
+           '===== INICIO DA WORKING - F2403D10 ====='.                  00110501
+      *================================================================*00110601
+       01  FILLER                      PIC X(050)          VALUE
+           '===== *  AREA DE FILE STATUS * ====='.
+
+       01  WRK-FS-FUNC                 PIC 9(002)          VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE
+           '===== *  AREA DE ERROS * ====='.
+
+       01  WRK-PROG-ON                 PIC X(008)          VALUE
+           'F2403D10'.
+
+       01  WRK-ARQ-ON                  PIC X(008)          VALUE
+           'FUNC    '.
+
+       01  WRK-TABELA-ON               PIC X(020)          VALUE
+           'F2403.FUNC'.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  VARIAVEL DE TEMPORARIA  * ====='.                  00110801
+
+       01  WRK-FUNC.
+           05 WRK-NOMEFUNC             PIC X(030)          VALUE SPACES.
+           05 WRK-DEPTOFUNC            PIC X(003)          VALUE SPACES.
+           05 WRK-SALFUNC              PIC 9(003)V99       VALUE ZEROS.
+           05 WRK-FILHOSFUNC           PIC 9(009)          VALUE ZEROS.
+           05 WRK-ADMISFUNC            PIC X(010)          VALUE SPACES.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  AREA DE ACUMULADORES  * ====='.                    00110801
+
+       01  ACU-GRAVADOS                PIC 9(003) COMP-3   VALUE ZEROS.
+       01  ACU-LIDOS                   PIC 9(003) COMP-3   VALUE ZEROS.
+       01  ACU-DUPLICADOS              PIC 9(003) COMP-3   VALUE ZEROS.
+       01  ACU-ID                      PIC 9(009) COMP-3   VALUE ZEROS.
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  AREA DE APOIO * ====='.                            00110801
+
+       01  WRK-SQLCODE                 PIC -999            VALUE ZEROS.
+       01  WRK-NULO                    PIC S9(004) COMP    VALUE ZEROS.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  AREA DE BOOK * ====='.                             00110801
+      *----------------------- BOOK DE MENSAGEM DE ERRO ---------------*
+
+       COPY BOOKERRO.
+
+      *----------------------- BOOK DE GRAVACAO DE ERROS - FUNC -------*
+
+       COPY BOOKLOG.
+
+      *----------------------- BOOK DE GRAVACAO DE ERROS - DB2---------*
+
+       COPY BOOKDB2.
+
+      *----------------------------------------------------------------*
+       01  FILLER                      PIC X(050)          VALUE        00110701
+           '===== *  AREA DE DB2  * ====='.                             00110801
+
+           EXEC SQL
+             INCLUDE SQLCA
+           END-EXEC.
+
+           EXEC SQL
+             INCLUDE BOOKFUNC
+           END-EXEC.
+
+      *----------------------------------------------------------------*00113001
+       01  FILLER                      PIC X(050)          VALUE        00113101
+           '====* FIM DA WORKING - F2403D10  *===='.                    00113201
+      *================================================================*00113301
+       PROCEDURE                       DIVISION.                        00113500
+      *================================================================*00113601
+       0000-PRINCIPAL                  SECTION.                         00113700
+                                                                        00113801
+           PERFORM 0100-INICIALIZAR.                                    00113900
+
+           PERFORM 0110-TESTAR-VAZIO.
+
+           PERFORM 0200-PROCESSAR UNTIL WRK-FS-FUNC EQUAL 10.           00114000
+
+           PERFORM 0300-FINALIZAR.                                      00114100
+
+           GOBACK.                                                      00114200
+                                                                        00114301
+      *----------------------------------------------------------------*
+       0000-99-FIM.                    EXIT.                            00114401
+      *----------------------------------------------------------------*
+      *
+      *----------------------------------------------------------------*00114501
+       0100-INICIALIZAR                SECTION.                         00114700
+      *----------------------------------------------------------------*00114801
+                                                                        00114901
+           OPEN INPUT FUNC.
+
+           PERFORM    0120-TESTAR-STATUS-FUNC.
+
+           INITIALIZE WRK-FUNC.
+
+      *----------------------------------------------------------------*
+       0100-99-FIM.                    EXIT.                            00115301
+      *----------------------------------------------------------------*
+      *                                                                *
+      *     SECAO PARA VERIFICAR SE CONTEM REGISTROS NO ARQUIVO - FUNC *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0110-TESTAR-VAZIO               SECTION.
+      *----------------------------------------------------------------*
+
+           PERFORM 0140-LER-FUNC.
+
+           IF WRK-FS-FUNC              EQUAL 10
+              DISPLAY '************************************'
+              DISPLAY '*                                  *'
+              DISPLAY '*       ARQUIVO FUNC VAZIO!!       *'
+              DISPLAY '*                                  *'
+              DISPLAY '*    PROCESSAMENTO ENCERRADO!!     *'
+              DISPLAY '*                                  *'
+              DISPLAY '************************************'
+           END-IF.
+
+      *----------------------------------------------------------------*00115401
+       0110-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*00115401
+      *                                                                *
+      * SECAO PARA TESTAR O STATUS DE ABERTURA DO ARQUIVO -FUNC        *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0120-TESTAR-STATUS-FUNC         SECTION.
+      *----------------------------------------------------------------*
+
+           IF WRK-FS-FUNC              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0120'              TO WRK-SECAO
+              MOVE WRK-ERRO-ABERTURA   TO WRK-MENSAGEM
+              MOVE WRK-FS-FUNC         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0120-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+      *                                                                *
+      *         REALIZAR A LEITURA DO ARQUIVO - FUNC                   *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0140-LER-FUNC                   SECTION.
+      *----------------------------------------------------------------*
+
+           READ FUNC                   INTO WRK-FUNC.
+
+           IF (WRK-FS-FUNC             NOT EQUAL 00 AND
+               WRK-FS-FUNC             NOT EQUAL 10)
+
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0140'              TO WRK-SECAO
+              MOVE WRK-ERRO-LEITURA    TO WRK-MENSAGEM
+              MOVE WRK-FS-FUNC         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*00115701
+       0140-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+      *
+      *                  PROCESSAMENTO DOS DADOS
+      *
+      *----------------------------------------------------------------*
+       0200-PROCESSAR                  SECTION.                         00115600
+      *----------------------------------------------------------------*00115701
+
+           ADD 1                       TO ACU-LIDOS.
+
+           ADD 1                       TO ACU-ID.
+
+           MOVE ACU-ID                 TO DB2-IDFUNC.
+           MOVE WRK-NOMEFUNC           TO DB2-NOMEFUNC.
+           MOVE WRK-DEPTOFUNC          TO DB2-DEPTOFUNC.
+           MOVE WRK-SALFUNC            TO DB2-SALFUNC.
+           MOVE WRK-FILHOSFUNC         TO DB2-FILHOSFUNC.
+           MOVE WRK-ADMISFUNC          TO DB2-ADMISFUNC.
+
+           PERFORM 0210-INSERT-SQL.
+
+           PERFORM 0140-LER-FUNC.
+
+      *----------------------------------------------------------------*00118001
+       0200-99-FIM.                    EXIT.                            00117901
+      *----------------------------------------------------------------*
+      *                                                                *
+      *    SECAO PARA REALIZAR O INSERT DA TABELA F2403.FUNC           *
+      *                                                                *
+      *----------------------------------------------------------------*00118001
+       0210-INSERT-SQL                 SECTION.
+      *----------------------------------------------------------------*
+
+           EXEC SQL
+              INSERT
+              INTO F2403.FUNC
+              (IDFUNC,
+               NOMEFUNC,
+               DEPTOFUNC,
+               SALFUNC,
+               FILHOSFUNC,
+               ADMISFUNC)
+
+              VALUES(:DB2-IDFUNC,
+                     :DB2-NOMEFUNC,
+                     :DB2-DEPTOFUNC,
+                     :DB2-SALFUNC,
+                     :DB2-FILHOSFUNC,
+                     :DB2-ADMISFUNC)
+
+           END-EXEC.
+
+           PERFORM  0220-TESTAR-SQL.
+
+      *----------------------------------------------------------------*
+       0210-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+      *                                                                *
+      *     SECAO EXPECIFICA PARA REALIZAR OS TESTES DO SQLCODE        *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0220-TESTAR-SQL                 SECTION.
+      *----------------------------------------------------------------*
+
+           IF (SQLCODE                 NOT EQUAL 0 AND +180 AND -803 )
+           OR (SQLWARN0 EQUAL 'W')
+
+              MOVE SQLCODE             TO WRK-SQLCODE
+              MOVE WRK-TABELA-ON       TO WRK-TABELA-DB2
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA-DB2
+              MOVE WRK-SQLCODE         TO WRK-SQLCODE-DB2
+              PERFORM 9998-TRATA-DB2
+           END-IF.
+
+           IF SQLCODE                  EQUAL 0
+              ADD 1                    TO ACU-GRAVADOS
+           END-IF.
+
+           PERFORM 0230-VALIDAR-DUPLICIDADE.
+
+
+      *----------------------------------------------------------------*
+       0220-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+      *                                                                *
+      *     SECAO PARA TESTA A DUPLICIDADE DE ALGUM ID DE REGISTRO     *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0230-VALIDAR-DUPLICIDADE        SECTION.
+      *----------------------------------------------------------------*
+
+           IF SQLCODE                  EQUAL -803
+              ADD 1                    TO ACU-DUPLICADOS
+              DISPLAY 'CHAVE DUPLICADA :' ACU-ID
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0230-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*00118301
+      *                                                                *
+      *  SECAO PARA FECHAR O ARQUIVO - FUNC E MOSTRAR A ESTATISTICA    *
+      *                                                                *
+      *----------------------------------------------------------------*
+       0300-FINALIZAR                  SECTION.                         00118200
+      *----------------------------------------------------------------*
+
+           PERFORM 0400-ESTATISTICA.
+
+      *----------------------------------------------------------------*
+       0310-FECHAR-FUNC.
+      *----------------------------------------------------------------*
+
+           CLOSE FUNC.
+                                                                        00118401
+           IF WRK-FS-FUNC              NOT EQUAL 00
+              MOVE WRK-PROG-ON         TO WRK-PROGRAMA
+              MOVE WRK-ARQ-ON          TO WRK-ARQUIVO
+              MOVE '0310'              TO WRK-SECAO
+              MOVE WRK-ERRO-FECHAMENTO TO WRK-MENSAGEM
+              MOVE WRK-FS-FUNC         TO WRK-STATUS
+              PERFORM 9999-TRATA-ERRO
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0300-99-FIM.                    EXIT.                            00130001
+      *----------------------------------------------------------------*
+      ******************************************************************
+      *                                                                *
+      *  SECAO PARA IMPRIMIR A ESTATISTICA DOS SEGUINTES REGISTROS     *
+      *                                                                *
+      *  - LIDOS                                                       *
+      *  - GRAVADOS                                                    *
+      *  - DUPLICADOS                                                  *
+      *                                                                *
+      ******************************************************************
+      *----------------------------------------------------------------*00140001
+       0400-ESTATISTICA                SECTION.
+      *----------------------------------------------------------------*
+
+           IF ACU-LIDOS                GREATER 0
+              DISPLAY '======== STATUS =========='
+              DISPLAY 'REGISTROS LIDOS      : ' ACU-LIDOS
+              DISPLAY 'REGISTROS GRAVADOS   : ' ACU-GRAVADOS
+              DISPLAY 'REGISTROS DUPLICADOS : ' ACU-DUPLICADOS
+           END-IF.
+
+      *----------------------------------------------------------------*
+       0400-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*
+      ******************************************************************
+      *                                                                *
+      * SECAO PARA TRATAR ERROS DE DB2 - CHAMANDO O MUDOLU - LOGDB2    *
+      *                                                                *
+      ******************************************************************
+
+      *----------------------------------------------------------------*
+       9998-TRATA-DB2                  SECTION.                         00160001
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGDB2    USING WRK-DADOS-DB2.             00170001
+           GOBACK.                                                      00180001
+                                                                        00181001
+      *----------------------------------------------------------------*
+       9998-99-FIM.                    EXIT.                            00190001
+      *----------------------------------------------------------------*
+      ******************************************************************
+      *                                                                *
+      *    SECAO PARA TRATAR ERROS DO ARQUIVO - CHAMANDO O MUDOLO      *
+      *                                                                *
+      *    - LOGERROS                                                  *
+      *                                                                *
+      ******************************************************************
+      *----------------------------------------------------------------*00200001
+       9999-TRATA-ERRO                 SECTION.
+      *----------------------------------------------------------------*
+
+           CALL WRK-PROGRAMA-LOGERRO   USING WRK-DADOS.
+           GOBACK.
+
+      *----------------------------------------------------------------*
+       9999-99-FIM.                    EXIT.
+      *----------------------------------------------------------------*

@@ -8,8 +8,8 @@
       * CONSULTORIA.. : FOURSYS
       * DATA......... : 20 / 08 / 2024
       *----------------------------------------------------------------*
-      * OBJETIVO......:LEITURA E GRAVACAO DOS ASSINANTES COM NETFLIX
-      *
+      * OBJETIVO......: GRAVAR NO ARQUIVO OS USUARIOS QUE SEJAM 
+      *                 ASSITANTES DE UM STREAMING ESCOLHIDO
       *
       *----------------------------------------------------------------*
       * ARQUIVOS... :

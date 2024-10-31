@@ -8,8 +8,10 @@
       * CONSULTORIA.. : FOURSYS
       * DATA......... : 22 / 08 / 2024
       *----------------------------------------------------------------*
-      * OBJETIVO......:
-      *
+      * OBJETIVO......:  FAZER A LEITURA DO ARQUIVO E FORMATAR OS DADOS 
+      *                   DE UM SEQUENCIAL COM REGISTROS ONDE O SALDO 
+      *                   FOR MAIOR QUE ZERO. 
+      *                  ( SALDOS MENORES DEVERAO SER DESPREZADOS)
       *
       *----------------------------------------------------------------*
       * ARQUIVOS... :
